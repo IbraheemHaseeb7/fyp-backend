@@ -1,0 +1,75 @@
+baseUrl:
+  development: http://localhost:8000/api
+
+loginDetails:
+  route: /log
+  type: JWT
+  token_location: data.accessToken
+
+credentials:
+  development:
+    headers:
+      Content-Type: application/json
+    method: POST
+    body:
+        password: A1s2d3f4!
+        registrationNumber: FA21-BCS-077
+
+current_pipeline:
+  globals:
+    headers:
+      Content-Type: application/json
+  pipeline:
+    - endpoint: /login
+      method: POST
+      body:
+        password: A1s2d3f4!
+        registrationNumber: FA21-BCS-077
+
+    - endpoint: /refresh
+      method: POST
+      body:
+        refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImlicmFoZWVtaGFzZWViN0BnbWFpbC5jb20iLCJleHAiOjE3Mzg5MTg2MDAsIm5hbWUiOiJJYnJhaGVlbSBCaW4gSGFzZWViIiwicmVnaXN0cmF0aW9uTnVtYmVyIjoiRkEyMS1CQ1MtMDc3In0.9z1ssN3b5VT3ZMwKSctNiSGzzzwxlSQNwNmwwoUw_UE
+      expectedStatusCode: 200
+
+custom_pipelines:
+  globals:
+    headers:
+      Content-Type: application/json
+  pipeline:
+    auth:
+      - endpoint: /signup
+        method: POST
+        body:
+          password: Example@123
+          name: "Testing"
+          email: "testing@gmail.com"
+          registrationNumber: FA21-BCS-000
+          dob: 2003-01-01
+          department: CS
+          semester: 8
+
+      - endpoint: /login
+        method: POST
+        body:
+          registrationNumber: FA21-BCS-077
+          password: A1s2d3f4
+          expectedStatusCode: 400
+
+      - endpoint: /login
+        method: POST
+        body:
+          registrationNumber: FA21-BCS-077
+          password: A1s2d3f4!
+          expectedStatusCode: 200
+
+      - endpoint: /login
+        method: POST
+        body:
+          registrationNumber: ASJDASDJASD
+          password: A1s2d3f4!
+          expectedStatusCode: 401
+
+
+
+
