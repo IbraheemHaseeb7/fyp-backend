@@ -68,8 +68,18 @@ func Signup(cr ControllerRequest) echo.HandlerFunc {
 
 		if cr.APIResponse.Error == "" || cr.APIResponse.Error == nil {
 
-			acccessToken, err := auth.CreateToken(*auth.NewUserToken(reqBody.Name, reqBody.Email, reqBody.RegistrationNumber), 60)
-			refreshToken, err := auth.CreateToken(*auth.NewUserToken(reqBody.Name, reqBody.Email, reqBody.RegistrationNumber), 1440)
+			v, ok := cr.APIResponse.Data.(map[string]any)
+			if !ok {
+				return cr.SendErrorResponse(&c)
+			}
+
+			id, ok := v["id"].(float64)
+			if !ok {
+				return cr.SendErrorResponse(&c)
+			}
+
+			acccessToken, err := auth.CreateToken(*auth.NewUserToken(id, reqBody.Name, reqBody.Email, reqBody.RegistrationNumber), 60)
+			refreshToken, err := auth.CreateToken(*auth.NewUserToken(id, reqBody.Name, reqBody.Email, reqBody.RegistrationNumber), 1440)
 			if err != nil {
 				return cr.SendErrorResponse(&c)
 			}
@@ -126,9 +136,10 @@ func Login(cr ControllerRequest) echo.HandlerFunc {
 
 			email := cr.APIResponse.Data.(map[string]any)["email"].(string)
 			name := cr.APIResponse.Data.(map[string]any)["name"].(string)
+			id := cr.APIResponse.Data.(map[string]any)["id"].(float64)
 
-			acccessToken, err := auth.CreateToken(*auth.NewUserToken(name, email, reqBody.RegistrationNumber), 60)
-			refreshToken, err := auth.CreateToken(*auth.NewUserToken(name, email, reqBody.RegistrationNumber), 1440)
+			acccessToken, err := auth.CreateToken(*auth.NewUserToken(id, name, email, reqBody.RegistrationNumber), 60)
+			refreshToken, err := auth.CreateToken(*auth.NewUserToken(id, name, email, reqBody.RegistrationNumber), 1440)
 			if err != nil {
 				return cr.SendErrorResponse(&c)
 			}
@@ -179,12 +190,13 @@ func RefreshToken(cr ControllerRequest) echo.HandlerFunc {
 			return cr.SendErrorResponse(&c)
 		}
 
-		accessToken, refreshToken, err := auth.RefreshToken(reqBody.RefreshToken); if err != nil {
+		accessToken, refreshToken, err := auth.RefreshToken(reqBody.RefreshToken)
+		if err != nil {
 			return cr.SendErrorResponse(&c)
 		}
-		
+
 		cr.APIResponse.Data = map[string]string{
-			"accessToken": accessToken,
+			"accessToken":  accessToken,
 			"refreshToken": refreshToken,
 		}
 		cr.APIResponse.StatusCode = 200

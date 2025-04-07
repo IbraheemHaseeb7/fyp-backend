@@ -1,10 +1,11 @@
 baseUrl:
-  development: http://localhost:8000/api
+  development: http://192.168.1.8:8000/api
 
 loginDetails:
-  route: /log
+  route: /login
   type: JWT
   token_location: data.accessToken
+  testing_route: /me
 
 credentials:
   development:
@@ -20,23 +21,73 @@ current_pipeline:
     headers:
       Content-Type: application/json
   pipeline:
-    - endpoint: /login
-      method: POST
-      body:
-        password: A1s2d3f4!
-        registrationNumber: FA21-BCS-077
-
-    - endpoint: /refresh
-      method: POST
-      body:
-        refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImlicmFoZWVtaGFzZWViN0BnbWFpbC5jb20iLCJleHAiOjE3Mzg5MTg2MDAsIm5hbWUiOiJJYnJhaGVlbSBCaW4gSGFzZWViIiwicmVnaXN0cmF0aW9uTnVtYmVyIjoiRkEyMS1CQ1MtMDc3In0.9z1ssN3b5VT3ZMwKSctNiSGzzzwxlSQNwNmwwoUw_UE
-      expectedStatusCode: 200
+      - endpoint: /vehicle
 
 custom_pipelines:
   globals:
     headers:
       Content-Type: application/json
   pipeline:
+    vehicle_delete:
+      - endpoint: /vehicle/21
+        method: DELETE
+
+    vehicle_update:
+      - endpoint: /vehicle/21
+        method: PATCH
+        body:
+          type: bike
+          make: Yamaha
+          model: YBR
+          year: 2023
+          vin: AQZ 9242
+          backUri: storage/public/something
+          frontUri: storage/public/something
+          insideUri: storage/public/something
+
+    vehicle_create:
+      - endpoint: /vehicle
+        method: POST
+        body:
+          type: bike
+          make: Yamaha
+          model: YBR
+          year: 2023
+          vin: AQZ 9241
+          backUri: "storage\\public\\197\\car\\1e1c6f1ad078ebdbb540bf5cc8f2b4ab2a0c8231106bc63d3b9af6637b32e172.jpg"
+          frontUri: "storage\\public\\197\\car\\1e1c6f1ad078ebdbb540bf5cc8f2b4ab2a0c8231106bc63d3b9af6637b32e172.jpg"
+          insideUri: "storage\\public\\197\\car\\1e1c6f1ad078ebdbb540bf5cc8f2b4ab2a0c8231106bc63d3b9af6637b32e172.jpg"
+
+    vehicle_get_all:
+      - endpoint: /vehicle
+
+    vehicle_get_one:
+      - endpoint: /vehicle/6
+
+    signup:
+      - endpoint: /signup
+        method: POST
+        body:
+          password: Example@123
+          name: "Testing"
+          email: "testing1@gmail.com"
+          registrationNumber: FA21-BCS-001
+          dob: 2003-01-01
+          department: CS
+          semester: 8
+    login:
+      - endpoint: /login
+        method: POST
+        body:
+          registrationNumber: FA21-BCS-077
+          password: A1s2d3f4!
+          expectedStatusCode: 200
+    img_get:
+      - baseUrl: localhost:8001/files/public/user1/card/cli.png
+
+    img_post:
+      - baseUrl: localhost:8001/files/public/user1/card/cli.png
+
     auth:
       - endpoint: /signup
         method: POST

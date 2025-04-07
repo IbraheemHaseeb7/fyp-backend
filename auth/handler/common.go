@@ -16,6 +16,14 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"READ_ALL": ReadAllVehicles,
 				"READ_ONE": ReadOneVehicle,
 				"CREATE":   CreateVehicle,
+				"UPDATE":   UpdateVehicle,
+				"DELETE":   DeleteVehicle,
+			},
+		},
+		"img->auth": {
+			"files": {
+				"VERIFY_TOKEN": VerifyToken,
+				"GET_CLAIMS":   GetClaims,
 			},
 		},
 	}

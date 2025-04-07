@@ -13,3 +13,11 @@ func ReadOneVehicle(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 func CreateVehicle(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	return pm, nil
 }
+
+func UpdateVehicle(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}
+
+func DeleteVehicle(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}

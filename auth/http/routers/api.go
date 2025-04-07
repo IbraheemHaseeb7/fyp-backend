@@ -62,11 +62,17 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	*/
 	router.GET("/vehicle", controllers.ReadAllVehicles(controllers.ControllerRequest{
 		Publisher: p,
-	}))
+	}), middlewares.Authenticate())
 	router.GET("/vehicle/:id", controllers.ReadOneVehicle(controllers.ControllerRequest{
 		Publisher: p,
-	}))
+	}), middlewares.Authenticate())
 	router.POST("/vehicle", controllers.CreateVehicle(controllers.ControllerRequest{
 		Publisher: p,
-	}))
+	}), middlewares.Authenticate())
+	router.PATCH("/vehicle/:id", controllers.UpdateVehicle(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.DELETE("/vehicle/:id", controllers.DeleteVehicle(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 }

@@ -14,52 +14,31 @@ import (
 func main() {
 
 	godotenv.Load()
-	amqpURI := os.Getenv("AMQP_STRING")
 
-	// creating a publisher
 	publisher, err := pubsub.NewPublisher(&pubsub.Publisher{
-		URI:   amqpURI,
-		Queue: "auth_db",
+		URI:   os.Getenv("AMQP_STRING"),
+		Queue: "file_auth",
 	})
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-
-	// subscribing to listen for responses from db server
-	auth2dbSubscriber, err := pubsub.NewSubscriber(&pubsub.Subscriber{
-		URI:   amqpURI,
-		Queue: "auth_db",
-	})
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	auth2dbSubscriber.ConsumeMessages(
-		"db->auth",
-		func(pm pubsub.PubsubMessage) {
-			utils.Requests[pm.UUID] <- pm
-		},
-		handler.Handle,
-	)
 
 	// subscribing to listen for responses from db server
 	img2authSubscriber, err := pubsub.NewSubscriber(&pubsub.Subscriber{
-		URI:   amqpURI,
-		Queue: "img_auth",
+		URI:   os.Getenv("AMQP_STRING"),
+		Queue: "auth_db",
 	})
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
 	img2authSubscriber.ConsumeMessages(
-		"img->auth",
+		"auth->img",
 		func(pm pubsub.PubsubMessage) {
-			pm.Topic = "auth->img"
-			publisher.PublishMessage(pm)
+			utils.Requests[pm.UUID] <- pm
 		},
 		handler.Handle,
 	)
 
-	// starting HTTP server
 	http.StartHTTPServer(publisher)
 }

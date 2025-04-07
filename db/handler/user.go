@@ -19,12 +19,12 @@ func ReadOneUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		return pubsub.PubsubMessage{
 			Payload: map[string]any{
 				"status": "Could not break down query",
-				"error": err.Error(),
+				"error":  err.Error(),
 			},
-			Entity: pm.Entity,
+			Entity:    pm.Entity,
 			Operation: pm.Operation,
-			Topic: "db->auth",
-			UUID: pm.UUID,
+			Topic:     "db->auth",
+			UUID:      pm.UUID,
 		}, nil
 	}
 
@@ -32,12 +32,12 @@ func ReadOneUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		return pubsub.PubsubMessage{
 			Payload: map[string]any{
 				"status": "Could not find registration number",
-				"error": "Please make sure to send registration number in the query",
+				"error":  "Please make sure to send registration number in the query",
 			},
-			Entity: pm.Entity,
+			Entity:    pm.Entity,
 			Operation: pm.Operation,
-			Topic: "db->auth",
-			UUID: pm.UUID,
+			Topic:     "db->auth",
+			UUID:      pm.UUID,
 		}, nil
 	}
 
@@ -45,10 +45,10 @@ func ReadOneUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	db.DB.Where("registration_number = ?", query.RegistrationNumber).First(&user)
 
 	return pubsub.PubsubMessage{
-		Payload:	map[string]any{
-			"data": user,
+		Payload: map[string]any{
+			"data":   user,
 			"status": "success",
-			"error": nil,
+			"error":  nil,
 		},
 		Entity:    pm.Entity,
 		Operation: pm.Operation,
@@ -63,10 +63,10 @@ func ReadAllUsers(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	db.DB.Find(&users)
 
 	return pubsub.PubsubMessage{
-		Payload:	map[string]any{
-			"data": users,
+		Payload: map[string]any{
+			"data":   users,
 			"status": "success",
-			"error": nil,
+			"error":  nil,
 		},
 		Entity:    pm.Entity,
 		Operation: pm.Operation,
@@ -81,10 +81,10 @@ func CreateUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	err := json.Unmarshal([]byte(pm.Payload.(string)), &user)
 	if err != nil {
 		return pubsub.PubsubMessage{
-			Payload:	map[string]any{
-				"data": nil,
+			Payload: map[string]any{
+				"data":   nil,
 				"status": "Could not parse JSON",
-				"error": err.Error(),
+				"error":  err.Error(),
 			},
 			Entity:    pm.Entity,
 			Operation: pm.Operation,
@@ -97,8 +97,8 @@ func CreateUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	if result.Error != nil {
 		return pubsub.PubsubMessage{
 			Payload: map[string]any{
-				"data": nil,
-				"error": result.Error.Error(),
+				"data":   nil,
+				"error":  result.Error.Error(),
 				"status": "Could not create new user",
 			},
 			Entity:    pm.Entity,
@@ -109,10 +109,10 @@ func CreateUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	}
 
 	return pubsub.PubsubMessage{
-		Payload:	map[string]any{
-			"data": nil,
+		Payload: map[string]any{
+			"data":   user,
 			"status": "Successfully created new user",
-			"error": nil,
+			"error":  nil,
 		},
 		Entity:    pm.Entity,
 		Operation: pm.Operation,

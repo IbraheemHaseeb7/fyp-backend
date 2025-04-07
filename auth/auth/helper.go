@@ -10,15 +10,17 @@ import (
 )
 
 type UserToken struct {
-	Name	 			string
-	Email    			string
-	RegistrationNumber 	string
+	ID                 float64
+	Name               string
+	Email              string
+	RegistrationNumber string
 }
 
-func NewUserToken(name, email, registrationNumber string) *UserToken {
+func NewUserToken(id float64, name, email, registrationNumber string) *UserToken {
 	return &UserToken{
-		Name: name,
-		Email:    email,
+		ID:                 id,
+		Name:               name,
+		Email:              email,
 		RegistrationNumber: registrationNumber,
 	}
 }
@@ -27,10 +29,11 @@ func CreateToken(user UserToken, minutes time.Duration) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"name": user.Name,
-			"email":    user.Email,
-			"registrationNumber":    user.RegistrationNumber,
-			"exp":      time.Now().Add(time.Minute * minutes).Unix(),
+			"id":                 user.ID,
+			"name":               user.Name,
+			"email":              user.Email,
+			"registrationNumber": user.RegistrationNumber,
+			"exp":                time.Now().Add(time.Minute * minutes).Unix(),
 		})
 
 	tokenString, err := token.SignedString([]byte(secret))
@@ -52,15 +55,28 @@ func RefreshToken(tokenString string) (string, string, error) {
 		return "", "", fmt.Errorf("Claims could not be extracted")
 	}
 
-	name := claims["name"].(string)
-	email := claims["email"].(string)
-	registrationNumber := claims["registrationNumber"].(string)
+	name, ok := claims["name"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("Could not assert type")
+	}
+	email, ok := claims["email"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("Could not assert type")
+	}
+	registrationNumber, ok := claims["registrationNumber"].(string)
+	if !ok {
+		return "", "", fmt.Errorf("Could not assert type")
+	}
+	id, ok := claims["id"].(float64)
+	if !ok {
+		return "", "", fmt.Errorf("Could not assert type")
+	}
 
-	newToken, err := CreateToken(*NewUserToken(name, email, registrationNumber), 60)
+	newToken, err := CreateToken(*NewUserToken(id, name, email, registrationNumber), 60)
 	if err != nil {
 		return "", "", err
 	}
-	refreshToken, err := CreateToken(*NewUserToken(name, email, registrationNumber), 1440)
+	refreshToken, err := CreateToken(*NewUserToken(id, name, email, registrationNumber), 1440)
 	if err != nil {
 		return "", "", err
 	}

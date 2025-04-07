@@ -16,7 +16,7 @@ type PubsubMessage struct {
 	Entity    string `json:"entity"`
 	Instance  *message.Message
 	Topic     string `json:"topic"`
-	UUID	  string `json:"uuid"`
+	UUID      string `json:"uuid"`
 }
 
 type Publisher struct {
@@ -130,4 +130,3 @@ func (s *Subscriber) ConsumeMessages(topic string, function func(PubsubMessage),
 	}()
 	return nil, nil
 }
-
