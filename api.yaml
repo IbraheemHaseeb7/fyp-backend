@@ -1,5 +1,5 @@
 baseUrl:
-  development: http://192.168.1.8:8000/api
+  development: http://localhost:8000/api
 
 loginDetails:
   route: /login
@@ -13,8 +13,8 @@ credentials:
       Content-Type: application/json
     method: POST
     body:
-        password: A1s2d3f4!
-        registrationNumber: FA21-BCS-077
+        password: Example@123
+        registrationNumber: FA21-BCS-001
 
 current_pipeline:
   globals:
@@ -54,9 +54,9 @@ custom_pipelines:
           model: YBR
           year: 2023
           vin: AQZ 9241
-          backUri: "storage\\public\\197\\car\\1e1c6f1ad078ebdbb540bf5cc8f2b4ab2a0c8231106bc63d3b9af6637b32e172.jpg"
-          frontUri: "storage\\public\\197\\car\\1e1c6f1ad078ebdbb540bf5cc8f2b4ab2a0c8231106bc63d3b9af6637b32e172.jpg"
-          insideUri: "storage\\public\\197\\car\\1e1c6f1ad078ebdbb540bf5cc8f2b4ab2a0c8231106bc63d3b9af6637b32e172.jpg"
+          backUri: "something"
+          frontUri: "something"
+          insideUri: "something"
 
     vehicle_get_all:
       - endpoint: /vehicle
