@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/IbraheemHaseeb7/fyp-backend/db"
+	"github.com/IbraheemHaseeb7/fyp-backend/utils"
 	"github.com/IbraheemHaseeb7/pubsub"
 	"github.com/IbraheemHaseeb7/types"
 )
@@ -12,7 +13,9 @@ func ReadAllVehicles(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 
 	type Query struct {
 		RegNo string `json:"regNo"`
+		PageNo int   `json:pagNo`
 	}
+
 	var query Query
 	if err := json.Unmarshal([]byte(pm.Payload.(string)), &query); err != nil {
 		return pubsub.PubsubMessage{
@@ -25,9 +28,10 @@ func ReadAllVehicles(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 			UUID:      pm.UUID,
 		}, nil
 	}
+	offset := utils.GetOffset(query.PageNo, 20)
 
 	var vehicles []types.Vehicle
-	result := db.DB.Raw("SELECT * FROM vehicles WHERE user_id = (SELECT id FROM users WHERE registration_number = ?)", query.RegNo).Scan(&vehicles)
+	result := db.DB.Where("user_id = (SELECT id FROM users WHERE registration_number = ?)", query.RegNo).Limit(20).Offset(offset).Find(&vehicles)
 
 	if result.Error != nil {
 		return pubsub.PubsubMessage{
@@ -73,7 +77,8 @@ func ReadOneVehicle(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	}
 
 	var vehicle types.Vehicle
-	result := db.DB.Raw("SELECT * FROM vehicles WHERE id = ? AND user_id = (SELECT id FROM users WHERE registration_number = ?)", query.ID, query.RegNo).Scan(&vehicle)
+	result := db.DB.Raw("SELECT * FROM vehicles WHERE id = ? AND user_id = (SELECT id FROM users WHERE registration_number = ?)", 
+		query.ID, query.RegNo).Scan(&vehicle)
 
 	if result.Error != nil {
 		return pubsub.PubsubMessage{

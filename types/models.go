@@ -9,8 +9,8 @@ type User struct {
 	Password           string    `json:"password"`
 	StudentCardURI     string    `json:"studentCardURI"`
 	LivePictureURI     string    `json:"livePictureURI"`
-	CreatedAt          time.Time `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt          time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
+	CreatedAt          time.Time `json:"createdAt" gorm:"created_at;autoCreateTime"`
+	UpdatedAt          time.Time `json:"updatedAt" gorm:"updated_at;autoUpdateTime"`
 	RegistrationNumber string    `json:"registrationNumber" gorm:"unique"`
 	Department         string    `json:"department"`
 	Semester           int8      `json:"semester" gorm:"default:1"`
@@ -28,8 +28,8 @@ type Vehicle struct {
 	FrontURI  string    `json:"frontUri"`
 	BackURI   string    `json:"backUri"`
 	InsideURI string    `json:"insideUri"`
-	CreatedAt time.Time `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt time.Time `json:"updatedAt" gorm:"autoUpdateTime"`
+	CreatedAt time.Time `json:"createdAt" gorm:"created_at;autoCreateTime"`
+	UpdatedAt time.Time `json:"updatedAt" gorm:"updated_at;autoUpdateTime"`
 	// User User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 

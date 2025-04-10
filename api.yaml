@@ -21,7 +21,7 @@ current_pipeline:
     headers:
       Content-Type: application/json
   pipeline:
-      - endpoint: /vehicle
+      - endpoint: /vehicle?page=1
 
 custom_pipelines:
   globals:

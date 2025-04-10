@@ -56,6 +56,7 @@ func ReadAllVehicles(cr ControllerRequest) echo.HandlerFunc {
 
 		uuid := watermill.NewUUID()
 		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		page := c.QueryParam("page")
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -63,7 +64,7 @@ func ReadAllVehicles(cr ControllerRequest) echo.HandlerFunc {
 			Operation: "READ_ALL",
 			Topic:     "auth->db",
 			UUID:      uuid,
-			Payload:   `{"regNo": "` + regNo + `"}`,
+			Payload:   `{"regNo": "` + regNo + `", "pageNo": ` + page + `}`,
 		}
 		err := cr.Publisher.PublishMessage(pubsubMessage)
 		if err != nil {

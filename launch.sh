@@ -10,10 +10,9 @@ pid=$!
 # display success message of starting auth service with process id
 echo "Successfully started auth service...Process ID: $pid"
 
-
 # starting db service
 echo "Starting db service..."
-cd ../db && air > /dev/null 2>&1 &
+cd db && air > /dev/null 2>&1 &
 
 # obtaining db service process id
 pid=$!
