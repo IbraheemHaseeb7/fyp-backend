@@ -33,13 +33,13 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	}), middlewares.Authenticate())
 
 	/*
-			 * USERS
-			 *
-		     * This contains all the routes for the users
-			 *
-			 * - GET /user 		gives all the users with the ability to perform pagination
-			 * - GET /user/:id	gives information about one user in particular
-			 * - POST /user/	allows the creation of new users
+	 * USERS
+	 *
+	 * This contains all the routes for the users
+	 *
+	 * - GET /user 		gives all the users with the ability to perform pagination
+	 * - GET /user/:id	gives information about one user in particular
+	 * - POST /user/	allows the creation of new users
 	*/
 	router.GET("/user", controllers.ReadAllUsers(controllers.ControllerRequest{
 		Publisher: p,
@@ -52,13 +52,13 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	}))
 
 	/*
-			 * VEHICLES
-			 *
-		     * This contains all the routes for the vehicles
-			 *
-			 * - GET /vechile 		gives all the vehicles with the ability to perform pagination
-			 * - GET /vehicle/:id	gives information about one vehicle in particular
-			 * - POST /vehicle/		allows the creation of new vehicles that could be assigned to a user
+	 * VEHICLES
+	 *
+	 * This contains all the routes for the vehicles
+	 *
+	 * - GET /vechile 		gives all the vehicles with the ability to perform pagination
+	 * - GET /vehicle/:id	gives information about one vehicle in particular
+	 * - POST /vehicle/		allows the creation of new vehicles that could be assigned to a user
 	*/
 	router.GET("/vehicle", controllers.ReadAllVehicles(controllers.ControllerRequest{
 		Publisher: p,
@@ -75,4 +75,18 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.DELETE("/vehicle/:id", controllers.DeleteVehicle(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
+
+	/*
+	 * EMAILS
+	 *
+	 * This contains all the routes for the emails
+	 *
+	 * - GET /email			sends email just for testing right now
+	*/
+	router.GET("/email", controllers.SendEmail(controllers.ControllerRequest{
+		Publisher: p,
+	}))
+	router.GET("/otp", controllers.SendOTP(controllers.ControllerRequest{
+		Publisher: p,
+	}))
 }

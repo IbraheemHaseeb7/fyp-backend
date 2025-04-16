@@ -6,6 +6,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -214,6 +215,189 @@ func UploadOneFile(cr ControllerRequest) echo.HandlerFunc {
 
 func DeleteFiles(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		tokenHeader := strings.Split(c.Request().Header.Get("Authorization"), " ")
+		if len(tokenHeader) < 1 {
+			cr.APIResponse.Status = "Could not authorize"
+			cr.APIResponse.StatusCode = 401
+			cr.APIResponse.Error = "Token not found in the header"
+			return cr.SendErrorResponse(&c)
+		}
+
+		uuid := watermill.NewUUID()
+		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+
+		cr.Publisher.PublishMessage(pubsub.PubsubMessage{
+			Payload: map[string]string{
+				"token": tokenHeader[1],
+			},
+			Entity:    "files",
+			Operation: "GET_CLAIMS",
+			UUID:      uuid,
+			Topic:     "img->auth",
+		})
+		authResp := <-utils.Requests[uuid]
+		delete(utils.Requests, uuid)
+
+		payload, ok := authResp.Payload.(map[string]any)
+		if !ok {
+			return cr.SendErrorResponse(&c)
+		}
+
+		if status := payload["verified"]; status == false {
+			cr.APIResponse.Status = "Token invalid"
+			cr.APIResponse.StatusCode = 401
+			return cr.SendErrorResponse(&c)
+		}
+
+		userId := payload["id"]
+		type Request struct {
+			Files []string `json:"files"`
+		}
+		var reqBody Request
+		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		for i := range reqBody.Files {
+			filePath := strings.Split(reqBody.Files[i], "/")
+			filePath[1] = fmt.Sprintf("%.f", userId)
+			newFilePath:= strings.Join(filePath, "/")
+			wd, _ := os.Getwd()
+			err := os.Remove(wd + "/storage/" + newFilePath) 
+			if err != nil {
+				fmt.Println(wd)
+				continue
+			}
+		}
+
+		cr.APIResponse.Data = "Successfully deleted all files"
 		return cr.SendSuccessResponse(&c)
 	}
 }
+
+func KeepOnlyFiles(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenHeader := strings.Split(c.Request().Header.Get("Authorization"), " ")
+		if len(tokenHeader) < 2 {
+			cr.APIResponse.Status = "Could not authorize"
+			cr.APIResponse.StatusCode = 401
+			cr.APIResponse.Error = "Token not found in the header"
+			return cr.SendErrorResponse(&c)
+		}
+
+		uuid := watermill.NewUUID()
+		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+
+		cr.Publisher.PublishMessage(pubsub.PubsubMessage{
+			Payload: map[string]string{
+				"token": tokenHeader[1],
+			},
+			Entity:    "files",
+			Operation: "GET_CLAIMS",
+			UUID:      uuid,
+			Topic:     "img->auth",
+		})
+		authResp := <-utils.Requests[uuid]
+		delete(utils.Requests, uuid)
+
+		payload, ok := authResp.Payload.(map[string]any)
+		if !ok {
+			return cr.SendErrorResponse(&c)
+		}
+		if status := payload["verified"]; status == false {
+			cr.APIResponse.Status = "Token invalid"
+			cr.APIResponse.StatusCode = 401
+			return cr.SendErrorResponse(&c)
+		}
+
+		userId := fmt.Sprintf("%.f", payload["id"].(float64))
+
+		type Request struct {
+			Files []string `json:"files"`
+			Dir string `json:"dir"`
+		}
+		var reqBody Request
+		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		// getting working directory
+		wd, err := os.Getwd()
+		if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		// creating temp dir if does not exist
+		destDir := filepath.Join(wd, "storage", reqBody.Dir, "temp")
+		err = os.MkdirAll(destDir, os.ModePerm)
+		if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		// Moving all the files in a temp directory
+		for _, path := range reqBody.Files {
+			split := strings.Split(path, "/")
+			if len(split) == 4 && split[1] == userId {
+				sourcePath := filepath.Join(wd, "storage", path)
+				destPath := filepath.Join(destDir, split[3])
+				err = os.Rename(sourcePath, destPath)
+				if err != nil {
+					cr.APIResponse.Error = err.Error()
+					return cr.SendErrorResponse(&c)
+				}
+			}
+		}
+
+		// Removing all the files in the dir
+		entries, err := os.ReadDir(filepath.Join(wd, "storage", reqBody.Dir))
+		if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			err := os.Remove(filepath.Join(wd, "storage", reqBody.Dir, entry.Name()))
+			if err != nil {
+				cr.APIResponse.Error = err.Error()
+				return cr.SendErrorResponse(&c)
+			}
+		}
+
+		// Moving all the files out of the temp dir
+		tempEntries, err := os.ReadDir(filepath.Join(wd, "storage", reqBody.Dir, "temp"))
+		if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+		for _, entry := range tempEntries {
+			if entry.IsDir() {
+				continue
+			}
+
+			sourcePath := filepath.Join(wd, "storage", reqBody.Dir, "temp", entry.Name())
+			destPath := filepath.Join(wd, "storage", reqBody.Dir, entry.Name())
+
+			err := os.Rename(sourcePath, destPath)
+			if err != nil {
+				cr.APIResponse.Error = err.Error()
+				return cr.SendErrorResponse(&c)
+			}
+		}
+
+		// removing the temp dir
+		err = os.Remove(path.Join(wd, "storage", reqBody.Dir, "temp"))
+		if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.APIResponse.Data = "Kept specified files and deleted the rest"
+		return cr.SendSuccessResponse(&c)
+	}
+}
+

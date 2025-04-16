@@ -1,6 +1,9 @@
 package http
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/IbraheemHaseeb7/fyp-backend/http/config"
 	"github.com/IbraheemHaseeb7/fyp-backend/http/routers"
 	"github.com/IbraheemHaseeb7/fyp-backend/utils"
@@ -21,5 +24,9 @@ func StartHTTPServer(p *pubsub.Publisher) {
 
 	routers.ImgRouter(e, p)
 
-	e.Logger.Fatal(e.Start("192.168.1.8:8001"))
+	if os.Getenv("ENVIRONMENT") == "local" {
+		e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))))
+	} else if os.Getenv("ENVIRONMENT") == "staging" {
+		e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%s", os.Getenv("BASE_ADDRESS"), os.Getenv("PORT"))))
+	}
 }

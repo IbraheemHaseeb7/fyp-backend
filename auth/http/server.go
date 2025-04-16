@@ -18,6 +18,7 @@ func StartHTTPServer(p *pubsub.Publisher) {
 
 	validation.Validate = validator.New(validator.WithRequiredStructEnabled())
 	validation.Validate.RegisterValidation("reg-no", validation.IsComsatsRegistrationNumber)
+	validation.Validate.RegisterValidation("cui-email", validation.IsComsatsEmail)
 	validation.Validate.RegisterValidation("password", validation.IsPassword)
 
 	e := echo.New()
@@ -26,7 +27,6 @@ func StartHTTPServer(p *pubsub.Publisher) {
 	routers.ApiRouter(e, p)
 
 	if os.Getenv("ENVIRONMENT") == "local" {
-		fmt.Println()
 		e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))))
 	} else if os.Getenv("ENVIRONMENT") == "staging" {
 		e.Logger.Fatal(e.Start(fmt.Sprintf("%s:%s", os.Getenv("BASE_ADDRESS"), os.Getenv("PORT"))))

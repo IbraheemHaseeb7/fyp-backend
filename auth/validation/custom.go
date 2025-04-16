@@ -9,6 +9,17 @@ import (
 
 var Validate *validator.Validate
 
+func IsComsatsEmail(fl validator.FieldLevel) bool {
+	if fl.Field().String() == "" {
+		return true
+	}
+
+    pattern := `^[a-zA-Z0-9._%+-]+@cuilahore\.edu\.pk$`
+	regex := regexp.MustCompile(pattern)
+
+	return regex.MatchString(fl.Field().String())
+}
+
 func IsComsatsRegistrationNumber(fl validator.FieldLevel) bool {
 	if fl.Field().String() == "" {
 		return true

@@ -1,21 +1,11 @@
 #!/bin/bash
 
-# starting auth service
-echo "Starting auth service..."
-cd auth && air > /dev/null 2>&1 &
+# Path to your project
+WORKDIR=~/work/fyp_b
 
-# obtaining auth service process id
-pid=$!
-
-# display success message of starting auth service with process id
-echo "Successfully started auth service...Process ID: $pid"
-
-# starting db service
-echo "Starting db service..."
-cd db && air > /dev/null 2>&1 &
-
-# obtaining db service process id
-pid=$!
-
-# display success message of starting db service with process id
-echo "Successfully started db service...Process ID: $pid"
+# Open 4 tabs in GNOME Terminal, each running the same command
+gnome-terminal --tab --title="apee-i" -- bash -c "cd $WORKDIR && nvim api.yaml; exec bash"
+gnome-terminal --tab --title="docker" -- bash -c "cd $WORKDIR && clear && sudo docker start 9f8a92492793 && sudo docker exec -it 9f8a92492793 bash; exec bash"
+gnome-terminal --tab --title="auth" -- bash -c "cd $WORKDIR/auth && clear && air; exec bash"
+gnome-terminal --tab --title="db" -- bash -c "cd $WORKDIR/db && clear && air; exec bash"
+gnome-terminal --tab --title="img" -- bash -c "cd $WORKDIR/img && clear && air; exec bash"

@@ -1,20 +1,27 @@
 package types
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type User struct {
-	Name               string    `json:"name"`
-	DOB                string    `json:"dob" gorm:"type:date"`
-	ID                 int64     `json:"id" gorm:"primaryKey"`
-	Password           string    `json:"password"`
-	StudentCardURI     string    `json:"studentCardURI"`
-	LivePictureURI     string    `json:"livePictureURI"`
-	CreatedAt          time.Time `json:"createdAt" gorm:"created_at;autoCreateTime"`
-	UpdatedAt          time.Time `json:"updatedAt" gorm:"updated_at;autoUpdateTime"`
-	RegistrationNumber string    `json:"registrationNumber" gorm:"unique"`
-	Department         string    `json:"department"`
-	Semester           int8      `json:"semester" gorm:"default:1"`
-	Email              string    `json:"email" gorm:"unique"`
+	Name               string    		`json:"name"`
+	DOB                string    		`json:"dob" gorm:"type:date"`
+	ID                 int64     		`json:"id" gorm:"primaryKey"`
+	Password           string    		`json:"password"`
+	StudentCardURI     string    		`json:"studentCardURI"`
+	LivePictureURI     string    		`json:"livePictureURI"`
+	CreatedAt          time.Time 		`json:"createdAt" gorm:"created_at;autoCreateTime"`
+	UpdatedAt          time.Time 		`json:"updatedAt" gorm:"updated_at;autoUpdateTime"`
+	RegistrationNumber string    		`json:"registrationNumber" gorm:"unique"`
+	Department         string    		`json:"department"`
+	Semester           int8      		`json:"semester" gorm:"default:1"`
+	Email              string    		`json:"email" gorm:"unique"`
+	EmailVerifiedAt	   sql.NullTime		`json:"emailVerified" gorm:"default:null"`
+	CardVerifiedAt	   sql.NullTime		`json:"cardVerified" gorm:"default:null"`
+	SelfieVerifiedAt   sql.NullTime		`json:"selfieVerified" gorm:"default:null"`
+	OTP				   sql.NullInt16	`json:"otp" gorm:"default:null"false`
 }
 
 type Vehicle struct {

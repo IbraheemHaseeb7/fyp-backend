@@ -157,7 +157,7 @@ func UpdateVehicle(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		}, nil
 	}
 
-	result := db.DB.Save(&vehicle)
+	result := db.DB.Updates(&vehicle)
 	if result.Error != nil {
 		return pubsub.PubsubMessage{
 			Payload: map[string]any{

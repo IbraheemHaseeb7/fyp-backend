@@ -1,5 +1,6 @@
 baseUrl:
   development: http://localhost:8000/api
+  staging: http://192.168.1.9:8000/api
 
 loginDetails:
   route: /login
@@ -13,21 +14,30 @@ credentials:
       Content-Type: application/json
     method: POST
     body:
-        password: Example@123
-        registrationNumber: FA21-BCS-001
+        password: A1s2d3f4!
+        registrationNumber: FA21-BCS-050
 
 current_pipeline:
   globals:
     headers:
       Content-Type: application/json
   pipeline:
-      - endpoint: /vehicle?page=1
+      - endpoint: /email
 
 custom_pipelines:
   globals:
     headers:
       Content-Type: application/json
   pipeline:
+    files_delete:
+      - baseUrl: http://localhost:8001/files/
+        method: DELETE
+        body:
+          files:
+            - 3a7354fef54b9c297b7817ff829859be62b0ca566c9137d8fb144eff08c828d6.jpeg
+            - a830d69b2be97f9600cb910711b344392e4a9e2ffa5b0b6e82e05090f7c946fe.jpeg
+            - 4acab0fc3bf9d5c809242030c4300c444539c2fa440d9544d6012d03ba7fb17a.jpeg
+            
     vehicle_delete:
       - endpoint: /vehicle/21
         method: DELETE

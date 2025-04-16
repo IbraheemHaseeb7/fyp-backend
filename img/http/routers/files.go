@@ -38,4 +38,7 @@ func ImgRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.DELETE("/", controllers.DeleteFiles(controllers.ControllerRequest{
 		Publisher: p,
 	}))
+	router.DELETE("/except/", controllers.KeepOnlyFiles(controllers.ControllerRequest{
+		Publisher: p,
+	}))
 }

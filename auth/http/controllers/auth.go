@@ -1,7 +1,11 @@
 package controllers
 
 import (
+	"crypto/rand"
+	"crypto/tls"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/IbraheemHaseeb7/fyp-backend/auth"
@@ -9,6 +13,7 @@ import (
 	"github.com/IbraheemHaseeb7/pubsub"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/labstack/echo/v4"
+	"gopkg.in/gomail.v2"
 )
 
 func Signup(cr ControllerRequest) echo.HandlerFunc {
@@ -22,7 +27,7 @@ func Signup(cr ControllerRequest) echo.HandlerFunc {
 			RegistrationNumber string `json:"registrationNumber" validate:"reg-no"`
 			Department         string `json:"department"`
 			Semester           int8   `json:"semester" validate:"required,gte=1,lte=12"`
-			Email              string `json:"email" validate:"required,email"`
+			Email              string `json:"email" validate:"required,cui-email"`
 		}
 		var reqBody Request
 		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
@@ -203,3 +208,71 @@ func RefreshToken(cr ControllerRequest) echo.HandlerFunc {
 		return cr.SendResponse(&c)
 	}
 }
+
+func SendOTP(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+
+		// generating 4 random bytes
+		bytes := make([]byte, 4)
+		_, err := rand.Read(bytes)
+		if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		// Convert bytes to a 4-digit OTP
+		otpInt := (int(bytes[0]) % 10000)
+		otp := fmt.Sprintf("%04d", otpInt)
+
+		// storing in database
+		// publishing a create message
+		uuid := watermill.NewUUID()
+		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "users",
+			Operation: "READ_ONE",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload: fmt.Sprintf(`
+			{
+				"otp": "%s"
+			}`, otp),
+		}
+		if err := cr.Publisher.PublishMessage(pubsubMessage); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+
+		SMTP_HOST := os.Getenv("SMTP_HOST")
+		port := os.Getenv("SMTP_PORT")
+		SMTP_EMAIL := os.Getenv("SMTP_EMAIL")
+		SMTP_USERNAME := os.Getenv("SMTP_USERNAME")
+		SMTP_PASSWORD := os.Getenv("SMTP_PASSWORD")
+
+		SMTP_PORT, err := strconv.Atoi(port)
+		if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		d := gomail.NewDialer(SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD)
+		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+
+		m := gomail.NewMessage()
+		m.SetHeader("From", SMTP_EMAIL)
+		m.SetHeader("To", "fa21-bcs-052@cuilahore.edu.pk")
+		m.SetHeader("Subject", "OTP Code for Ridelink Signup")
+		m.SetBody("text/html", "<p>How are you doing, this is your OTP code: "+otp+"</p>")
+
+		if err := d.DialAndSend(m); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+		
+		cr.APIResponse.Data = "OTP code has been emailed, please check your email. You should find the OTP address under the email address of `ibraheemhaseeb7@gmail.com`" 
+		return cr.SendResponse(&c)
+	}
+}
+

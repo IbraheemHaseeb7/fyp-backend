@@ -28,6 +28,8 @@ func (cr *ControllerRequest) SendSuccessResponse(c *echo.Context) error {
 		cr.APIResponse.Status = "Successfully processed request"
 	}
 
+	cr.APIResponse.Error = nil
+
 	return (*c).JSON(cr.APIResponse.StatusCode, map[string]any{
 		"status": cr.APIResponse.Status,
 		"error":  cr.APIResponse.Error,
