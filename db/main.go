@@ -34,11 +34,36 @@ func main() {
 		fmt.Println(err.Error())
 	}
 
+	imgSubscriber, err := pubsub.NewSubscriber(&pubsub.Subscriber{
+		URI:   amqpURI,
+		Queue: "img_db",
+	})
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	imgPublisher, err := pubsub.NewPublisher(&pubsub.Publisher{
+		URI:   amqpURI,
+		Queue: "img_db",
+	})
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
 	subscriber.ConsumeMessages(
 		"auth->db",
 		func(pm pubsub.PubsubMessage) {
 			pm.Topic = "db->auth"
 			publisher.PublishMessage(pm)
+		},
+		handler.Handle,
+	)
+
+	imgSubscriber.ConsumeMessages(
+		"img->db",
+		func(pm pubsub.PubsubMessage) {
+			pm.Topic = "db->img"
+			imgPublisher.PublishMessage(pm)
 		},
 		handler.Handle,
 	)

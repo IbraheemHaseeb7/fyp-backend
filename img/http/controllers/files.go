@@ -26,41 +26,8 @@ type FileHandler struct {
 
 func ReadOnePrivateFile(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
-
-		tokenHeader := strings.Split(c.Request().Header.Get("Authorization"), " ")
-		if len(tokenHeader) > 1 {
-			uuid := watermill.NewUUID()
-			utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
-
-			cr.Publisher.PublishMessage(pubsub.PubsubMessage{
-				Payload: map[string]string{
-					"token": tokenHeader[1],
-				},
-				Entity:    "files",
-				Operation: "VERIFY_TOKEN",
-				UUID:      uuid,
-				Topic:     "img->auth",
-			})
-			authResp := <-utils.Requests[uuid]
-			delete(utils.Requests, uuid)
-
-			payload, ok := authResp.Payload.(map[string]any)
-			if !ok {
-				return cr.SendErrorResponse(&c)
-			}
-
-			if status := payload["verified"]; status == false {
-				cr.APIResponse.Status = "Token invalid"
-				cr.APIResponse.StatusCode = 401
-				return cr.SendErrorResponse(&c)
-			}
-			return c.File(fmt.Sprintf("%s/%s/%s/%s",
-				filepath.Join("storage/private"), c.Param("level1"), c.Param("level2"), c.Param("filename")))
-		}
-
-		cr.APIResponse.Status = "Token not found"
-		cr.APIResponse.StatusCode = 401
-		return cr.SendErrorResponse(&c)
+		return c.File(fmt.Sprintf("%s/%s/%s/%s",
+			filepath.Join("storage/private"), c.Param("level1"), c.Param("level2"), c.Param("filename")))
 	}
 }
 
@@ -101,42 +68,10 @@ func UploadOneFile(cr ControllerRequest) echo.HandlerFunc {
 
 		defer file.Close()
 
-		tokenHeader := strings.Split(c.Request().Header.Get("Authorization"), " ")
-		if len(tokenHeader) < 1 {
-			cr.APIResponse.Status = "Could not authorize"
-			cr.APIResponse.StatusCode = 401
-			cr.APIResponse.Error = "Token not found in the header"
-			return cr.SendErrorResponse(&c)
-		}
-
-		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
-
-		cr.Publisher.PublishMessage(pubsub.PubsubMessage{
-			Payload: map[string]string{
-				"token": tokenHeader[1],
-			},
-			Entity:    "files",
-			Operation: "GET_CLAIMS",
-			UUID:      uuid,
-			Topic:     "img->auth",
-		})
-		authResp := <-utils.Requests[uuid]
-		delete(utils.Requests, uuid)
-
-		payload, ok := authResp.Payload.(map[string]any)
-		if !ok {
-			return cr.SendErrorResponse(&c)
-		}
-
-		if status := payload["verified"]; status == false {
-			cr.APIResponse.Status = "Token invalid"
-			cr.APIResponse.StatusCode = 401
-			return cr.SendErrorResponse(&c)
-		}
+		id := c.Get("auth_user_id")
 
 		hash := utils.GenerateHash(map[string]string{
-			"id": fmt.Sprintf("%.f", payload["id"].(float64)),
+			"id": fmt.Sprintf("%.f", id.(float64)),
 			"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
 		})
 
@@ -169,11 +104,11 @@ func UploadOneFile(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		// creating directory if doesn't exist
-		os.Mkdir(fmt.Sprintf("%s/%s/%.f", filepath.Join("storage"), medium, payload["id"].(float64)), 0777)
-		os.Mkdir(fmt.Sprintf("%s/%s/%.f/%s", filepath.Join("storage"), medium, payload["id"].(float64), folder), 0777)
+		os.Mkdir(fmt.Sprintf("%s/%s/%.f", filepath.Join("storage"), medium, id.(float64)), 0777)
+		os.Mkdir(fmt.Sprintf("%s/%s/%.f/%s", filepath.Join("storage"), medium, id.(float64), folder), 0777)
 
 		// storing file in the folder system
-		outFilePath := filepath.Join("storage/"+medium+"/"+fmt.Sprintf("%.f", payload["id"].(float64))+"/"+folder+"/", hash+"."+fileExt)
+		outFilePath := filepath.Join("storage/"+medium+"/"+fmt.Sprintf("%.f", id.(float64))+"/"+folder+"/", hash+"."+fileExt)
 		outFile, err := os.Create(outFilePath)
 		if err != nil {
 			cr.APIResponse.Status = "Could not parse file"
@@ -207,8 +142,11 @@ func UploadOneFile(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		cr.APIResponse.Data = map[string]string{
-			"filepath": fmt.Sprintf("%s/%.f/%s/%s.%s", medium, payload["id"], folder, hash, fileExt),
+			"filepath": fmt.Sprintf("%s/%.f/%s/%s.%s", medium, id, folder, hash, fileExt),
 		}
+
+		cr.APIResponse.Status = "Successfully uploaded file"
+		cr.APIResponse.StatusCode = 201
 		return cr.SendSuccessResponse(&c)
 	}
 }
@@ -277,40 +215,9 @@ func DeleteFiles(cr ControllerRequest) echo.HandlerFunc {
 
 func KeepOnlyFiles(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		tokenHeader := strings.Split(c.Request().Header.Get("Authorization"), " ")
-		if len(tokenHeader) < 2 {
-			cr.APIResponse.Status = "Could not authorize"
-			cr.APIResponse.StatusCode = 401
-			cr.APIResponse.Error = "Token not found in the header"
-			return cr.SendErrorResponse(&c)
-		}
+		id := c.Get("auth_user_id")
 
-		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
-
-		cr.Publisher.PublishMessage(pubsub.PubsubMessage{
-			Payload: map[string]string{
-				"token": tokenHeader[1],
-			},
-			Entity:    "files",
-			Operation: "GET_CLAIMS",
-			UUID:      uuid,
-			Topic:     "img->auth",
-		})
-		authResp := <-utils.Requests[uuid]
-		delete(utils.Requests, uuid)
-
-		payload, ok := authResp.Payload.(map[string]any)
-		if !ok {
-			return cr.SendErrorResponse(&c)
-		}
-		if status := payload["verified"]; status == false {
-			cr.APIResponse.Status = "Token invalid"
-			cr.APIResponse.StatusCode = 401
-			return cr.SendErrorResponse(&c)
-		}
-
-		userId := fmt.Sprintf("%.f", payload["id"].(float64))
+		userId := fmt.Sprintf("%.f", id.(float64))
 
 		type Request struct {
 			Files []string `json:"files"`

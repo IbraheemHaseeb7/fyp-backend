@@ -12,6 +12,12 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"GET_CLAIMS":   GetClaims,
 			},
 		},
+		"db->img": {
+			"files": {
+				"VERIFY_CARD": VerifyCard,
+				"VERIFY_SELFIE": VerifySelfie,
+			},
+		},
 	}
 
 	return router[topic][pubsubMessage.Entity][pubsubMessage.Operation](pubsubMessage)

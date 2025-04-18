@@ -9,3 +9,4 @@ gnome-terminal --tab --title="docker" -- bash -c "cd $WORKDIR && clear && sudo d
 gnome-terminal --tab --title="auth" -- bash -c "cd $WORKDIR/auth && clear && air; exec bash"
 gnome-terminal --tab --title="db" -- bash -c "cd $WORKDIR/db && clear && air; exec bash"
 gnome-terminal --tab --title="img" -- bash -c "cd $WORKDIR/img && clear && air; exec bash"
+gnome-terminal --tab --title="coding" -- bash -c "cd $WORKDIR && clear && nvim; exec bash"

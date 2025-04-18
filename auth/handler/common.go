@@ -10,7 +10,10 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 			"users": {
 				"READ_ALL": ReadAllUsers,
 				"READ_ONE": ReadOneUser,
+				"LOGIN": 	ReadOneUser,
 				"CREATE":   CreateUser,
+				"STORE_OTP": StoreOTP,
+				"VERIFY_OTP": VerifyOTP,
 			},
 			"vehicles": {
 				"READ_ALL": ReadAllVehicles,

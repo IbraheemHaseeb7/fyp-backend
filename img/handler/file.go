@@ -11,3 +11,11 @@ func VerifyToken(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 func GetClaims(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	return pm, nil
 }
+
+func VerifyCard(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}
+
+func VerifySelfie(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}

@@ -17,7 +17,7 @@ func main() {
 
 	publisher, err := pubsub.NewPublisher(&pubsub.Publisher{
 		URI:   os.Getenv("AMQP_STRING"),
-		Queue: "file_auth",
+		Queue: "img_auth",
 	})
 	if err != nil {
 		fmt.Println(err.Error())
@@ -26,7 +26,7 @@ func main() {
 	// subscribing to listen for responses from db server
 	img2authSubscriber, err := pubsub.NewSubscriber(&pubsub.Subscriber{
 		URI:   os.Getenv("AMQP_STRING"),
-		Queue: "auth_db",
+		Queue: "img_auth",
 	})
 	if err != nil {
 		fmt.Println(err.Error())
@@ -34,6 +34,22 @@ func main() {
 
 	img2authSubscriber.ConsumeMessages(
 		"auth->img",
+		func(pm pubsub.PubsubMessage) {
+			utils.Requests[pm.UUID] <- pm
+		},
+		handler.Handle,
+	)
+
+	img2dbSubscriber, err := pubsub.NewSubscriber(&pubsub.Subscriber{
+		URI:   os.Getenv("AMQP_STRING"),
+		Queue: "img_db",
+	})
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	img2dbSubscriber.ConsumeMessages(
+		"db->img",
 		func(pm pubsub.PubsubMessage) {
 			utils.Requests[pm.UUID] <- pm
 		},

@@ -14,15 +14,22 @@ credentials:
       Content-Type: application/json
     method: POST
     body:
+        registrationNumber: FA21-BCS-052
         password: A1s2d3f4!
-        registrationNumber: FA21-BCS-050
+  staging:
+    headers:
+      Content-Type: application/json
+    method: POST
+    body:
+        registrationNumber: FA21-BCS-052
+        password: A1s2d3f4!
 
 current_pipeline:
   globals:
     headers:
       Content-Type: application/json
   pipeline:
-      - endpoint: /email
+      - endpoint: /me
 
 custom_pipelines:
   globals:

@@ -10,7 +10,10 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 			"users": {
 				"READ_ALL": ReadAllUsers,
 				"READ_ONE": ReadOneUser,
+				"LOGIN":	Login,
 				"CREATE":   CreateUser,
+				"STORE_OTP": StoreOTP,
+				"VERIFY_OTP": VerifyOTP,
 			},
 			"vehicles": {
 				"CREATE":   CreateVehicle,
@@ -18,6 +21,12 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"DELETE":   DeleteVehicle,
 				"READ_ALL": ReadAllVehicles,
 				"READ_ONE": ReadOneVehicle,
+			},
+		},
+		"img->db": {
+			"files": {
+				"VERIFY_CARD": VerifyCard,
+				"VERIFY_SELFIE": VerifySelfie,
 			},
 		},
 	}

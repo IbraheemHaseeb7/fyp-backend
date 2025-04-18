@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"crypto/rand"
 	"crypto/tls"
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"strconv"
 	"strings"
@@ -116,7 +116,7 @@ func Login(cr ControllerRequest) echo.HandlerFunc {
 		// publishing a create message
 		pubsubMessage := pubsub.PubsubMessage{
 			Entity:    "users",
-			Operation: "READ_ONE",
+			Operation: "LOGIN",
 			Topic:     "auth->db",
 			UUID:      uuid,
 			Payload: fmt.Sprintf(`
@@ -212,17 +212,14 @@ func RefreshToken(cr ControllerRequest) echo.HandlerFunc {
 func SendOTP(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
-		// generating 4 random bytes
-		bytes := make([]byte, 4)
-		_, err := rand.Read(bytes)
-		if err != nil {
-			cr.APIResponse.Error = err.Error()
+		// Convert bytes to a 4-digit OTP
+		otpInt := 1000 + rand.IntN(9999-1000)
+		otp := fmt.Sprintf("%04d", otpInt)
+
+		email, ok := c.Get("auth_user_email").(string); if !ok {
+			cr.APIResponse.Error = "Could not fetch email"
 			return cr.SendErrorResponse(&c)
 		}
-
-		// Convert bytes to a 4-digit OTP
-		otpInt := (int(bytes[0]) % 10000)
-		otp := fmt.Sprintf("%04d", otpInt)
 
 		// storing in database
 		// publishing a create message
@@ -230,13 +227,14 @@ func SendOTP(cr ControllerRequest) echo.HandlerFunc {
 		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
 		pubsubMessage := pubsub.PubsubMessage{
 			Entity:    "users",
-			Operation: "READ_ONE",
+			Operation: "STORE_OTP",
 			Topic:     "auth->db",
 			UUID:      uuid,
 			Payload: fmt.Sprintf(`
 			{
-				"otp": "%s"
-			}`, otp),
+				"otp": "%s",
+				"email": "%s"
+			}`, otp, email),
 		}
 		if err := cr.Publisher.PublishMessage(pubsubMessage); err != nil {
 			cr.APIResponse.Error = err.Error()
@@ -244,7 +242,11 @@ func SendOTP(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		cr.GetAndFormResponse(pubsubMessage)
+		if cr.APIResponse.Error != nil {
+			return cr.SendErrorResponse(&c)
+		}
 
+		// fetching vars to send email
 		SMTP_HOST := os.Getenv("SMTP_HOST")
 		port := os.Getenv("SMTP_PORT")
 		SMTP_EMAIL := os.Getenv("SMTP_EMAIL")
@@ -276,3 +278,47 @@ func SendOTP(cr ControllerRequest) echo.HandlerFunc {
 	}
 }
 
+func VerifyOTP(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+
+		type Request struct {
+			OTP string `json:"otp"`
+		}
+		var reqBody Request
+		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		email, ok := c.Get("auth_user_email").(string); if !ok {
+			cr.APIResponse.Error = "Could not fetch email"
+			return cr.SendErrorResponse(&c)
+		}
+
+		// sending otp in database and verifying
+		// publishing a create message
+		uuid := watermill.NewUUID()
+		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "users",
+			Operation: "VERIFY_OTP",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload: fmt.Sprintf(`
+			{
+				"otp": "%s",
+				"email": "%s"
+			}`, reqBody.OTP, email),
+		}
+		if err := cr.Publisher.PublishMessage(pubsubMessage); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		if cr.APIResponse.Error != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		return cr.SendResponse(&c)
+	}
+}

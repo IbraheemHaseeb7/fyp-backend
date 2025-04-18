@@ -88,5 +88,8 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	}))
 	router.GET("/otp", controllers.SendOTP(controllers.ControllerRequest{
 		Publisher: p,
-	}))
+	}), middlewares.Authenticate())
+	router.POST("/verify-otp", controllers.VerifyOTP(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 }
