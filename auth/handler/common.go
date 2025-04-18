@@ -22,6 +22,13 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"UPDATE":   UpdateVehicle,
 				"DELETE":   DeleteVehicle,
 			},
+			"requests": {
+				"READ_ALL": GetAllRequests,
+				"READ_ONE": GetSingleRequest,
+				"CREATE":	CreateRequest,
+				"UPDATE":	UpdateRequest,
+				"DELETE":	DeleteRequest,
+			},
 		},
 		"img->auth": {
 			"files": {

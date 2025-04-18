@@ -92,4 +92,31 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.POST("/verify-otp", controllers.VerifyOTP(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
+
+	/*
+		* REQUESTS
+		*
+		* This contains all the routes for the requests
+		*
+		* - GET /requests			fetches all the requests from the database
+		* - GET /requests/:id		fetches all the requests from the database
+		* - POST /requests			fetches all the requests from the database
+		* - PATCH /requests/:id		fetches all the requests from the database
+		* - DELETE /requests/:id	fetches all the requests from the database
+	*/
+	router.GET("/requests", controllers.GetAllRequests(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.GET("/requests/:id", controllers.GetSingleRequest(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.POST("/requests", controllers.CreateRequest(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.PATCH("/requests/:id", controllers.UpdateRequest(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.DELETE("/requests/:id", controllers.UpdateRequest(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 }

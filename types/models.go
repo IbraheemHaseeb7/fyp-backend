@@ -40,11 +40,24 @@ type Vehicle struct {
 	// User User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
-type Role struct {
-	ID     int64  `json:"id" gorm:"primaryKey"`
-	UserID int64  `json:"userId"`
-	Role   string `json:"role"`
-	// User User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+// type Role struct {
+// 	ID     int64  `json:"id" gorm:"primaryKey"`
+// 	UserID int64  `json:"userId"`
+// 	Role   string `json:"role"`
+// 	User User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+// }
+
+type Request struct {
+	UserID			int64 			`json:"userId"`
+	Trunk			bool			`json:"trunk"`
+	Persons 		uint8			`json:"persons"`
+	VehicleType		string			`json:"vehicleType"`
+	Lat				float64			`json:"lat"`
+	Long			float64			`json:"long"`
+	Status			string			`json:"status"`
+	OriginatorRole	string			`json:"originatorRole"`
+	CreatedAt 		time.Time 		`json:"createdAt" gorm:"created_at;autoCreateTime"`
+	UpdatedAt 		time.Time 		`json:"updatedAt" gorm:"updated_at;autoUpdateTime"`
 }
 
 type Ride struct {
