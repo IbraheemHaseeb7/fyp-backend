@@ -21,7 +21,7 @@ func GetAllRequests(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	offset := utils.GetOffset(int(reqBody["page"].(float64)), 20)
 
 	var requests []types.Request
-	result := db.DB.Model(&types.Request{}).Limit(20).Offset(offset).Find(&requests)
+	result := db.DB.Model(&types.Request{}).Limit(20).Offset(offset).Where("status = ?", reqBody["status"]).Find(&requests)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
@@ -77,9 +77,29 @@ func CreateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 }
 
 func UpdateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	var request map[string]any
+	err := json.Unmarshal([]byte(pm.Payload.(string)), &request)
+	if err != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"status": "Could not parse JSON",
+			"error":  err.Error(),
+		}, pm, "db->auth")
+	}
+
+	result := db.DB.Model(&types.Request{}).Where("id = ? and user_id = ?", request["id"], request["user_id"]).Save(&request)
+	if result.Error != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"data":   nil,
+			"error":  result.Error.Error(),
+			"status": "Could not update request",
+		}, pm, "db->auth")
+	}
+
 	return utils.CreateRespondingPubsubMessage(map[string]any{
-		"data": "Successfully created new request",
-	}, pm, "db->img")
+		"data":		request,
+		"status": 	"Successfully updated request",
+		"error":  	nil,
+	}, pm, "db->auth")
 }
 
 func DeleteRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {

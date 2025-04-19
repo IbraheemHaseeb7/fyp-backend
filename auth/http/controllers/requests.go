@@ -20,7 +20,7 @@ func GetAllRequests(cr ControllerRequest) echo.HandlerFunc {
 			return cr.SendErrorResponse(&c)
 		}
 
-		payload, err := json.Marshal(map[string]int{"page": page}); if err != nil {
+		payload, err := json.Marshal(map[string]any{"page": page, "status": c.QueryParam("status")}); if err != nil {
 			cr.APIResponse.Error = err.Error()
 			return cr.SendErrorResponse(&c)
 		}
@@ -80,7 +80,6 @@ func CreateRequest(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		var reqBody types.Request
-
 		reqBody.UserID = int64(c.Get("auth_user_id").(float64))
 
 		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
@@ -116,8 +115,59 @@ func CreateRequest(cr ControllerRequest) echo.HandlerFunc {
 
 func UpdateRequest(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		
-		return cr.SendSuccessResponse(&c)
+		type Request struct {
+			Trunk			bool			`json:"trunk" validate:"required"`
+			Persons 		uint8			`json:"persons" validate:""`
+			VehicleType		string			`json:"vehicle_type" validate:""`
+			FromLat			float64			`json:"from_lat" validate:""`
+			FromLong		float64			`json:"from_long" validate:""`
+			ToLat			float64			`json:"to_lat" validate:""`
+			ToLong			float64			`json:"to_long" validate:""`
+			Status			string			`json:"status" validate:""`
+			OriginatorRole	string			`json:"originator_role" validate:""`
+		}
+		var reqBody Request
+		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		mapData, err := utils.StructToMap(reqBody); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		for key, value := range mapData {
+			if value == 0 || value == "0" || value == "" || value == nil || value == float64(0) || value == uint8(0) {
+				delete(mapData, key)
+			}
+		}
+
+		mapData["user_id"] = c.Get("auth_user_id")
+		mapData["id"] = c.Param("id")
+		payload, err := json.Marshal(mapData); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		uuid := watermill.NewUUID()
+		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+
+		// publishing a read message
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    	"requests",
+			Operation: 	"UPDATE",
+			Topic:     	"auth->db",
+			UUID:     	uuid,
+			Payload: 	string(payload),
+		}
+		err = cr.Publisher.PublishMessage(pubsubMessage)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		return cr.SendResponse(&c)
 	}
 }
 
