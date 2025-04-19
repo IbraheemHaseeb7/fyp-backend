@@ -29,6 +29,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"CREATE":	CreateRequest,
 				"UPDATE":	UpdateRequest,
 				"DELETE":	DeleteRequest,
+				"SET_STATUS": SetStatus,
 			},
 		},
 		"img->auth": {

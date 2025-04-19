@@ -15,7 +15,7 @@ func GetAllRequests(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	if err := json.Unmarshal([]byte(pm.Payload.(string)), &reqBody); err != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": err.Error(),
-		}, pm, "db->img")
+		}, pm, "db->auth")
 	}
 
 	offset := utils.GetOffset(int(reqBody["page"].(float64)), 20)
@@ -25,12 +25,12 @@ func GetAllRequests(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
-		}, pm, "db->img")
+		}, pm, "db->auth")
 	}
 
 	return utils.CreateRespondingPubsubMessage(map[string]any{
 		"data": requests,
-	}, pm, "db->img")
+	}, pm, "db->auth")
 }
 
 func GetSingleRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
@@ -39,7 +39,7 @@ func GetSingleRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	if err := json.Unmarshal([]byte(pm.Payload.(string)), &reqBody); err != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": err.Error(),
-		}, pm, "db->img")
+		}, pm, "db->auth")
 	}
 
 	var request types.Request
@@ -47,12 +47,12 @@ func GetSingleRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
-		}, pm, "db->img")
+		}, pm, "db->auth")
 	}
 
 	return utils.CreateRespondingPubsubMessage(map[string]any{
 		"data": request,
-	}, pm, "db->img")
+	}, pm, "db->auth")
 }
 
 func CreateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
@@ -61,19 +61,54 @@ func CreateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	if err := json.Unmarshal([]byte(pm.Payload.(string)), &reqBody); err != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": err.Error(),
-		}, pm, "db->img")
+		}, pm, "db->auth")
 	}
 
-	result := db.DB.Create(&reqBody)
+	// checking for active requests under this user_id
+	var count int64
+	result := db.DB.Model(&types.Request{}).
+		Where("user_id = ? AND status != ?", reqBody.UserID, "completed").
+		Count(&count)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
-		}, pm, "db->img")
+		}, pm, "db->auth")
+	}
+	if count > 0 {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": "You already have a an active request",
+			"status": "Cannot create new ride request",
+		}, pm, "db->auth")
+	}
+
+	// checking if the role is rider, then they must have 1 or more vehicles added
+	if reqBody.OriginatorRole == "rider" {
+		result := db.DB.Model(&types.Vehicle{}).
+			Where("user_id = ?", reqBody.UserID).
+			Count(&count)
+		if result.Error != nil {
+			return utils.CreateRespondingPubsubMessage(map[string]any{
+				"error": result.Error.Error(),
+			}, pm, "db->auth")
+		}
+		if count == 0  {
+			return utils.CreateRespondingPubsubMessage(map[string]any{
+				"error": "You don't have any vehicles added to generate request",
+				"status": "Cannot create new ride request",
+			}, pm, "db->auth")
+		}
+	}
+
+	result = db.DB.Create(&reqBody)
+	if result.Error != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": result.Error.Error(),
+		}, pm, "db->auth")
 	}
 
 	return utils.CreateRespondingPubsubMessage(map[string]any{
 		"data": reqBody,
-	}, pm, "db->img")
+	}, pm, "db->auth")
 }
 
 func UpdateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
@@ -107,17 +142,38 @@ func DeleteRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	if err := json.Unmarshal([]byte(pm.Payload.(string)), &reqBody); err != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": err.Error(),
-		}, pm, "db->img")
+		}, pm, "db->auth")
 	}
 
 	result := db.DB.Where("id = ? and user_id = ?", reqBody.ID, reqBody.UserID).Delete(&types.Request{})
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
-		}, pm, "db->img")
+		}, pm, "db->auth")
 	}
 
 	return utils.CreateRespondingPubsubMessage(map[string]any{
 		"data": fmt.Sprintf("Deleted rows count: %d", result.RowsAffected),
-	}, pm, "db->img")
+	}, pm, "db->auth")
+}
+
+func SetStatus(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+
+	var reqBody map[string]any
+	if err := json.Unmarshal([]byte(pm.Payload.(string)), &reqBody); err != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": err.Error(),
+		}, pm, "db->auth")
+	}
+
+	result := db.DB.Model(&types.Request{}).Where("id = ?", reqBody["id"]).Update("status", reqBody["status"])
+	if result.Error != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": result.Error.Error(),
+		}, pm, "db->auth")
+	}
+
+	return utils.CreateRespondingPubsubMessage(map[string]any{
+		"data": fmt.Sprintf("Successfully updated request's status"),
+	}, pm, "db->auth")
 }

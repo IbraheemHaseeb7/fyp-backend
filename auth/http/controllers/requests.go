@@ -116,7 +116,9 @@ func CreateRequest(cr ControllerRequest) echo.HandlerFunc {
 func UpdateRequest(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		type Request struct {
-			Trunk			bool			`json:"trunk" validate:"required"`
+			Trunk			*bool			`json:"trunk"`
+			VehicleID		int64			`json:"vehicle_id"`
+			RequestID		int64			`json:"request_id"`
 			Persons 		uint8			`json:"persons" validate:""`
 			VehicleType		string			`json:"vehicle_type" validate:""`
 			FromLat			float64			`json:"from_lat" validate:""`
@@ -138,7 +140,12 @@ func UpdateRequest(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		for key, value := range mapData {
-			if value == 0 || value == "0" || value == "" || value == nil || value == float64(0) || value == uint8(0) {
+			if key == "trunk" {
+				if (value.(*bool)) == nil {
+					delete(mapData, "trunk")
+				}
+			}
+			if value == 0 || value == "0" || value == "" || value == nil || value == float64(0) || value == uint8(0) || value == int64(0)  {
 				delete(mapData, key)
 			}
 		}
@@ -203,3 +210,46 @@ func DeleteRequest(cr ControllerRequest) echo.HandlerFunc {
 		return cr.SendResponse(&c)
 	}
 }
+
+func SetStatus(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		type Request struct {
+			ID 	int	`json:"id" validate:"required"`
+			Status 	string	`json:"status" validate:"required"`
+		}
+		var reqBody Request
+		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		mapData, err := utils.StructToMap(reqBody); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+		payload, err := json.Marshal(mapData); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		uuid := watermill.NewUUID()
+		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+
+		// publishing a read message
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "requests",
+			Operation: "SET_STATUS",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload:   string(payload),
+		}
+		err = cr.Publisher.PublishMessage(pubsubMessage)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		return cr.SendResponse(&c)
+	}
+}
+

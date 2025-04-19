@@ -122,4 +122,7 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.DELETE("/requests/:id", controllers.DeleteRequest(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
+	router.POST("/requests/set-status", controllers.SetStatus(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 }

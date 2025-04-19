@@ -29,6 +29,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"DELETE":	DeleteRequest,
 				"READ_ALL":	GetAllRequests,
 				"READ_ONE": GetSingleRequest,
+				"SET_STATUS":SetStatus,
 			},
 		},
 		"img->db": {

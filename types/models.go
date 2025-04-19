@@ -50,6 +50,7 @@ type Vehicle struct {
 type Request struct {
 	ID              int64     		`json:"id" gorm:"primaryKey"`
 	UserID			int64 			`json:"user_id" validate:"required"`
+	VehicleID		int64			`json:"vehicle_id"`
 	Trunk			bool			`json:"trunk" validate:"required"`
 	Persons 		uint8			`json:"persons" validate:"required"`
 	VehicleType		string			`json:"vehicle_type" validate:"required"`
@@ -59,6 +60,7 @@ type Request struct {
 	ToLong			float64			`json:"to_long" validate:"required"`
 	Status			string			`json:"status" validate:"required"`
 	OriginatorRole	string			`json:"originator_role" validate:"required"`
+	RequestID		int64			`json:"request_id"`
 	CreatedAt 		time.Time 		`json:"created_at" gorm:"created_at;autoCreateTime"`
 	UpdatedAt 		time.Time 		`json:"updated_at" gorm:"updated_at;autoUpdateTime"`
 }
