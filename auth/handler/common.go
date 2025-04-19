@@ -14,6 +14,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"CREATE":   CreateUser,
 				"STORE_OTP": StoreOTP,
 				"VERIFY_OTP": VerifyOTP,
+				"UPDATE_ONE": UpdateUser,
 			},
 			"vehicles": {
 				"READ_ALL": ReadAllVehicles,

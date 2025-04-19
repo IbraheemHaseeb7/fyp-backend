@@ -31,6 +31,9 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.GET("/me", controllers.Me(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
+	// router.PATCH("/me", controllers.UpdateUser(controllers.ControllerRequest{
+	// 	Publisher: p,
+	// }), middlewares.Authenticate())
 
 	/*
 	 * USERS
@@ -116,7 +119,7 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.PATCH("/requests/:id", controllers.UpdateRequest(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
-	router.DELETE("/requests/:id", controllers.UpdateRequest(controllers.ControllerRequest{
+	router.DELETE("/requests/:id", controllers.DeleteRequest(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
 }

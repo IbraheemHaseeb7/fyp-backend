@@ -14,6 +14,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"CREATE":   CreateUser,
 				"STORE_OTP": StoreOTP,
 				"VERIFY_OTP": VerifyOTP,
+				"UPDATE_ONE": UpdateUser,
 			},
 			"vehicles": {
 				"CREATE":   CreateVehicle,
@@ -21,6 +22,13 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"DELETE":   DeleteVehicle,
 				"READ_ALL": ReadAllVehicles,
 				"READ_ONE": ReadOneVehicle,
+			},
+			"requests": {
+				"CREATE":	CreateRequest,
+				"UPDATE":	UpdateRequest,
+				"DELETE":	DeleteRequest,
+				"READ_ALL":	GetAllRequests,
+				"READ_ONE": GetSingleRequest,
 			},
 		},
 		"img->db": {

@@ -48,16 +48,19 @@ type Vehicle struct {
 // }
 
 type Request struct {
-	UserID			int64 			`json:"userId"`
-	Trunk			bool			`json:"trunk"`
-	Persons 		uint8			`json:"persons"`
-	VehicleType		string			`json:"vehicleType"`
-	Lat				float64			`json:"lat"`
-	Long			float64			`json:"long"`
-	Status			string			`json:"status"`
-	OriginatorRole	string			`json:"originatorRole"`
-	CreatedAt 		time.Time 		`json:"createdAt" gorm:"created_at;autoCreateTime"`
-	UpdatedAt 		time.Time 		`json:"updatedAt" gorm:"updated_at;autoUpdateTime"`
+	ID              int64     		`json:"id" gorm:"primaryKey"`
+	UserID			int64 			`json:"user_id" validate:"required"`
+	Trunk			bool			`json:"trunk" validate:"required"`
+	Persons 		uint8			`json:"persons" validate:"required"`
+	VehicleType		string			`json:"vehicle_type" validate:"required"`
+	FromLat			float64			`json:"from_lat" validate:"required"`
+	FromLong		float64			`json:"from_long" validate:"required"`
+	ToLat			float64			`json:"to_lat" validate:"required"`
+	ToLong			float64			`json:"to_long" validate:"required"`
+	Status			string			`json:"status" validate:"required"`
+	OriginatorRole	string			`json:"originator_role" validate:"required"`
+	CreatedAt 		time.Time 		`json:"created_at" gorm:"created_at;autoCreateTime"`
+	UpdatedAt 		time.Time 		`json:"updated_at" gorm:"updated_at;autoUpdateTime"`
 }
 
 type Ride struct {

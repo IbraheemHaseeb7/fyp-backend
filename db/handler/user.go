@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/IbraheemHaseeb7/fyp-backend/db"
+	"github.com/IbraheemHaseeb7/fyp-backend/utils"
 	"github.com/IbraheemHaseeb7/pubsub"
 	"github.com/IbraheemHaseeb7/types"
 )
@@ -321,4 +322,31 @@ func VerifyOTP(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		Topic: "db->auth",
 		UUID: pm.UUID,
 	}, nil
+}
+
+func UpdateUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+
+	var user map[string]any
+	err := json.Unmarshal([]byte(pm.Payload.(string)), &user)
+	if err != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"status": "Could not parse JSON",
+			"error":  err.Error(),
+		}, pm, "db->auth")
+	}
+
+	result := db.DB.Model(&types.User{}).Where("registration_number = ?", user["registrationNumber"]).Save(&user)
+	if result.Error != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"data":   nil,
+			"error":  result.Error.Error(),
+			"status": "Could not update user",
+		}, pm, "db->auth")
+	}
+
+	return utils.CreateRespondingPubsubMessage(map[string]any{
+		"data":   user,
+		"status": "Successfully updated user",
+		"error":  nil,
+	}, pm, "db->auth")
 }
