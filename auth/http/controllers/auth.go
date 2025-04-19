@@ -186,6 +186,61 @@ func Me(cr ControllerRequest) echo.HandlerFunc {
 	}
 }
 
+func UpdateUser(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		type Request struct {
+			Name               string `json:"name" validate:""`
+			DOB                string `json:"dob" validate:""`
+			StudentCardURI     string `json:"studentCardURI"`
+			LivePictureURI     string `json:"livePictureURI"`
+			Department         string `json:"department"`
+			Semester           int8   `json:"semester" validate:"omitempty,gte=1,lte=12"`
+			Email              string `json:"email" validate:"omitempty,cui-email"`
+		}
+		var reqBody Request
+		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		mapData, err := utils.StructToMap(reqBody); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		for key, value := range mapData {
+			if value == 0 || value == "0" || value == "" || value == nil || value == int8(0) {
+				delete(mapData, key)
+			}
+		}
+
+		mapData["registration_number"] = c.Get("auth_user_registration_number")
+		payload, err := json.Marshal(mapData); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		uuid := watermill.NewUUID()
+		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+
+		// publishing a read message
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    	"users",
+			Operation: 	"UPDATE_ONE",
+			Topic:     	"auth->db",
+			UUID:     	uuid,
+			Payload: 	string(payload),
+		}
+		err = cr.Publisher.PublishMessage(pubsubMessage)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		return cr.SendResponse(&c)
+	}
+}
+
 func VerifyOTP(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		email := c.Get("auth_user_email").(string)
