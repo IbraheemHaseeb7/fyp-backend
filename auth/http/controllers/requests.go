@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/IbraheemHaseeb7/fyp-backend/utils"
@@ -20,7 +21,17 @@ func GetAllRequests(cr ControllerRequest) echo.HandlerFunc {
 			return cr.SendErrorResponse(&c)
 		}
 
-		payload, err := json.Marshal(map[string]any{"page": page, "status": c.QueryParam("status")}); if err != nil {
+		status := c.QueryParam("status"); if status == "" {
+			status = "searching"
+		}
+
+		me := c.QueryParam("me"); if me == "true" {
+			me = fmt.Sprintf("%.f", c.Get("auth_user_id").(float64))
+		} else {
+			me = "false"
+		}
+
+		payload, err := json.Marshal(map[string]any{"page": page, "status": status, "me": me}); if err != nil {
 			cr.APIResponse.Error = err.Error()
 			return cr.SendErrorResponse(&c)
 		}

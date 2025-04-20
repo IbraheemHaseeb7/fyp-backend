@@ -6,22 +6,22 @@ import (
 )
 
 type User struct {
-	Name               string    		`json:"name"`
-	DOB                string    		`json:"dob" gorm:"type:date"`
-	ID                 int64     		`json:"id" gorm:"primaryKey"`
-	Password           string    		`json:"password"`
-	StudentCardURI     string    		`json:"studentCardURI"`
-	LivePictureURI     string    		`json:"livePictureURI"`
-	CreatedAt          time.Time 		`json:"createdAt" gorm:"created_at;autoCreateTime"`
-	UpdatedAt          time.Time 		`json:"updatedAt" gorm:"updated_at;autoUpdateTime"`
-	RegistrationNumber string    		`json:"registrationNumber" gorm:"unique"`
-	Department         string    		`json:"department"`
-	Semester           int8      		`json:"semester" gorm:"default:1"`
-	Email              string    		`json:"email" gorm:"unique"`
-	EmailVerifiedAt	   sql.NullTime		`json:"emailVerified" gorm:"default:null"`
-	CardVerifiedAt	   sql.NullTime		`json:"cardVerified" gorm:"default:null"`
-	SelfieVerifiedAt   sql.NullTime		`json:"selfieVerified" gorm:"default:null"`
-	OTP				   sql.NullInt16	`json:"otp" gorm:"default:null"false`
+	Name               string    		`json:"name,omitempty"`
+	DOB                string    		`json:"dob,omitempty" gorm:"type:date"`
+	ID                 int64     		`json:"id,omitempty" gorm:"primaryKey"`
+	Password           string    		`json:"password,omitempty"`
+	StudentCardURI     string    		`json:"studentCardURI,omitempty"`
+	LivePictureURI     string    		`json:"livePictureURI,omitempty"`
+	CreatedAt          time.Time 		`json:"createdAt,omitempty" gorm:"created_at;autoCreateTime"`
+	UpdatedAt          time.Time 		`json:"updatedAt,omitempty" gorm:"updated_at;autoUpdateTime"`
+	RegistrationNumber string    		`json:"registrationNumber,omitempty" gorm:"unique"`
+	Department         string    		`json:"department,omitempty"`
+	Semester           int8      		`json:"semester,omitempty" gorm:"default:1"`
+	Email              string    		`json:"email,omitempty" gorm:"unique"`
+	EmailVerifiedAt	   sql.NullTime		`json:"emailVerified,omitempty" gorm:"default:null"`
+	CardVerifiedAt	   sql.NullTime		`json:"cardVerified,omitempty" gorm:"default:null"`
+	SelfieVerifiedAt   sql.NullTime		`json:"selfieVerified,omitempty" gorm:"default:null"`
+	OTP				   sql.NullInt16	`json:"otp,omitempty" gorm:"default:null"false`
 }
 
 type Vehicle struct {
@@ -63,6 +63,8 @@ type Request struct {
 	RequestID		int64			`json:"request_id"`
 	CreatedAt 		time.Time 		`json:"created_at" gorm:"created_at;autoCreateTime"`
 	UpdatedAt 		time.Time 		`json:"updated_at" gorm:"updated_at;autoUpdateTime"`
+	Vehicle			Vehicle			
+	User			User
 }
 
 type Ride struct {

@@ -8,6 +8,7 @@ import (
 	"github.com/IbraheemHaseeb7/fyp-backend/utils"
 	"github.com/IbraheemHaseeb7/pubsub"
 	"github.com/IbraheemHaseeb7/types"
+	"gorm.io/gorm"
 )
 
 func GetAllRequests(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
@@ -21,7 +22,19 @@ func GetAllRequests(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	offset := utils.GetOffset(int(reqBody["page"].(float64)), 20)
 
 	var requests []types.Request
-	result := db.DB.Model(&types.Request{}).Limit(20).Offset(offset).Where("status = ?", reqBody["status"]).Find(&requests)
+	query := db.DB.Model(&types.Request{}).
+		Preload("Vehicle").
+		Preload("User").
+		Limit(20).
+		Offset(offset).
+		Where("status = ?", reqBody["status"])
+	var result *gorm.DB
+
+	if reqBody["me"] != "false" {
+		result = query.Where("user_id = ?", reqBody["me"]).Find(&requests)
+	}
+
+	result = query.Find(&requests)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
@@ -43,7 +56,11 @@ func GetSingleRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	}
 
 	var request types.Request
-	result := db.DB.Model(&types.Request{}).Where("id = ?", reqBody.ID).First(&request)
+	result := db.DB.Model(&types.Request{}).Preload("Vehicle").
+		Preload("User", func (db *gorm.DB) *gorm.DB {
+			return db.Select("id, name, email, registration_number")
+		}).
+		Where("id = ?", reqBody.ID).First(&request)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
