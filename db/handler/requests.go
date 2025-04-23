@@ -116,9 +116,6 @@ func CreateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		}
 	}
 
-	if *reqBody.VehicleID == 0 {
-		reqBody.VehicleID = nil
-	}
 	result = db.DB.Create(&reqBody)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{

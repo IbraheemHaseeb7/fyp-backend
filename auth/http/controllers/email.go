@@ -11,6 +11,7 @@ import (
 
 func SendEmail(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		email := c.Get("auth_user_email").(string)
 
 		SMTP_HOST := os.Getenv("SMTP_HOST")
 		port := os.Getenv("SMTP_PORT")
@@ -28,7 +29,7 @@ func SendEmail(cr ControllerRequest) echo.HandlerFunc {
 
 		m := gomail.NewMessage()
 		m.SetHeader("From", SMTP_EMAIL)
-		m.SetHeader("To", "fa21-bcs-052@cuilahore.edu.pk")
+		m.SetHeader("To", email)
 		m.SetHeader("Subject", "Hello from Ridelink")
 		m.SetBody("text/html", "<p>How are you my pookie lil cutie patootie???</p>")
 

@@ -104,6 +104,7 @@ func ReadOneUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		SelfieVerifiedAt	sql.NullTime	`json:"selfieVerifiedAt"`
 		Semester			uint8			`json:"semester"`
 		Department			string			`json:"department"`
+		Id					int64			`json:"id"`
 	}
 	var user RequestUser
 	db.DB.Model(&types.User{}).Where("registration_number = ?", query.RegistrationNumber).Find(&user)
