@@ -1,13 +1,13 @@
 package controllers
 
 import (
-	"crypto/rand"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"math/rand"
 
 	"github.com/IbraheemHaseeb7/fyp-backend/auth"
 	"github.com/IbraheemHaseeb7/fyp-backend/utils"
@@ -310,15 +310,10 @@ func SendOTP(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		// generating 4 random bytes
-		bytes := make([]byte, 4)
-		_, err := rand.Read(bytes)
-		if err != nil {
-			cr.APIResponse.Error = err.Error()
-			return cr.SendErrorResponse(&c)
-		}
+		userEmail := c.Get("auth_user_email").(string)
 
 		// Convert bytes to a 4-digit OTP
-		otpInt := (int(bytes[0]) % 10000)
+		otpInt := rand.Intn(8998) + 1001
 		otp := fmt.Sprintf("%04d", otpInt)
 
 		// storing in database
@@ -327,13 +322,14 @@ func SendOTP(cr ControllerRequest) echo.HandlerFunc {
 		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
 		pubsubMessage := pubsub.PubsubMessage{
 			Entity:    "users",
-			Operation: "READ_ONE",
+			Operation: "STORE_OTP",
 			Topic:     "auth->db",
 			UUID:      uuid,
 			Payload: fmt.Sprintf(`
 			{
-				"otp": "%s"
-			}`, otp),
+				"otp": "%s",
+				"email": "%s"
+			}`, otp, userEmail),
 		}
 		if err := cr.Publisher.PublishMessage(pubsubMessage); err != nil {
 			cr.APIResponse.Error = err.Error()
@@ -359,7 +355,7 @@ func SendOTP(cr ControllerRequest) echo.HandlerFunc {
 
 		m := gomail.NewMessage()
 		m.SetHeader("From", SMTP_EMAIL)
-		m.SetHeader("To", "fa21-bcs-052@cuilahore.edu.pk")
+		m.SetHeader("To", userEmail)
 		m.SetHeader("Subject", "OTP Code for Ridelink Signup")
 		m.SetBody("text/html", "<p>How are you doing, this is your OTP code: "+otp+"</p>")
 

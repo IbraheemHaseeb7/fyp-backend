@@ -31,6 +31,10 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"DELETE":	DeleteRequest,
 				"SET_STATUS": SetStatus,
 			},
+			"proposals": {
+				"GET_ALL": GetAllProposals,
+				"GET_ALL_MY": GetAllMyProposals,
+			},
 		},
 		"img->auth": {
 			"files": {

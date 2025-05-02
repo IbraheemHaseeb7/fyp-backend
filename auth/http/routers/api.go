@@ -88,7 +88,7 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	*/
 	router.GET("/email", controllers.SendEmail(controllers.ControllerRequest{
 		Publisher: p,
-	}))
+	}), middlewares.Authenticate())
 	router.GET("/otp", controllers.SendOTP(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
@@ -123,6 +123,14 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 		Publisher: p,
 	}), middlewares.Authenticate())
 	router.POST("/requests/set-status", controllers.SetStatus(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+
+
+	router.GET("/proposals/:request_id", controllers.GetAllProposals(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.GET("/proposals/user/me", controllers.GetAllMyProposals(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
 }

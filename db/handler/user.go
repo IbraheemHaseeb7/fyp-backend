@@ -201,7 +201,7 @@ func CreateUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 func StoreOTP(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 
 	type Request struct {
-		OTP		int `json:"otp"`
+		OTP		string	`json:"otp"`
 		Email	string	`json:"email"`
 	}
 	var requestBody Request
