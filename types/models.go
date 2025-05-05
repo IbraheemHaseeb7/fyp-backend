@@ -51,7 +51,7 @@ type Request struct {
 	ID              int64     		`json:"id" gorm:"primaryKey"`
 	UserID			int64 			`json:"user_id" validate:"required"`
 	VehicleID		*int64			`json:"vehicle_id,omitempty"`
-	Trunk			bool			`json:"trunk" validate:"required"`
+	Trunk			bool			`json:"trunk,omitempty"`
 	Persons 		uint8			`json:"persons" validate:"required"`
 	VehicleType		string			`json:"vehicle_type" validate:"required"`
 	FromLat			float64			`json:"from_lat" validate:"required"`
