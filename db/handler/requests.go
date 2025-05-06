@@ -169,6 +169,8 @@ func DeleteRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		}, pm, "db->auth")
 	}
 
+	db.DB.Where("request_id = ?", reqBody.ID).Delete(&types.Request{})
+
 	return utils.CreateRespondingPubsubMessage(map[string]any{
 		"data": fmt.Sprintf("Deleted rows count: %d", result.RowsAffected),
 	}, pm, "db->auth")

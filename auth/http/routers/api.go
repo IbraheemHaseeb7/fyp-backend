@@ -127,10 +127,30 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	}), middlewares.Authenticate())
 
 
+	/*
+		* PROPOSALS
+		*
+		* This contains all the routes for the proposals
+		*
+		* - GET /proposals/:request_id			fetches all the proposals from the database
+		* - GET /proposals/user/me				fetches all the proposals from the database
+	*/
 	router.GET("/proposals/:request_id", controllers.GetAllProposals(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
 	router.GET("/proposals/user/me", controllers.GetAllMyProposals(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+
+
+	/*
+		* LOCATIONS
+		*
+		* This contains all the routes for the locations
+		*
+		* - GET /location			fetches the location from the google api
+	*/
+	router.GET("/location", controllers.GetLocationName(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
 }

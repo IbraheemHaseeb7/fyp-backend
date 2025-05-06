@@ -58,9 +58,12 @@ type Request struct {
 	FromLong		float64			`json:"from_long" validate:"required"`
 	ToLat			float64			`json:"to_lat" validate:"required"`
 	ToLong			float64			`json:"to_long" validate:"required"`
+	ToName			*string			`json:"to_name" validate:"required"`
+	FromName		*string			`json:"from_name" validate:"required"`
 	Status			string			`json:"status" validate:"required"`
 	OriginatorRole	string			`json:"originator_role" validate:"required"`
 	RequestID		int64			`json:"request_id"`
+	Until			time.Time		`json:"until" validate:"required"`
 	CreatedAt 		time.Time 		`json:"created_at" gorm:"created_at;autoCreateTime"`
 	UpdatedAt 		time.Time 		`json:"updated_at" gorm:"updated_at;autoUpdateTime"`
 	Vehicle			Vehicle			
