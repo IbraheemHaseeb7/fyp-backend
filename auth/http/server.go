@@ -25,6 +25,7 @@ func StartHTTPServer(p *pubsub.Publisher) {
 	e.Use(middleware.CORS())
 
 	routers.ApiRouter(e, p)
+	routers.IndexRouter(e, p)
 
 	if os.Getenv("ENVIRONMENT") == "local" {
 		e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", os.Getenv("PORT"))))
