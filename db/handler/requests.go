@@ -84,13 +84,14 @@ func CreateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	// checking for active requests under this user_id
 	var count int64
 	result := db.DB.Model(&types.Request{}).
-		Where("user_id = ? AND status != ?", reqBody.UserID, "completed").
+		Where("user_id = ? AND status <> ? AND status <> ?", reqBody.UserID, "completed", "expired").
 		Count(&count)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
 		}, pm, "db->auth")
 	}
+	fmt.Println("Count: ", count, " UserID: ", reqBody.UserID)
 	if count > 0 {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": "You already have a an active request",

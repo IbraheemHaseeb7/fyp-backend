@@ -48,6 +48,7 @@ func GetLocationName(cr ControllerRequest) echo.HandlerFunc {
 		}
 		cr.APIResponse.Status = "Successfully fetched location name"
 		cr.APIResponse.Error = nil
+		cr.APIResponse.StatusCode = 200
 
 		return cr.SendSuccessResponse(&c)
 	}

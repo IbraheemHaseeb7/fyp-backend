@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/IbraheemHaseeb7/fyp-backend/db"
 	"github.com/IbraheemHaseeb7/fyp-backend/handler"
+	"github.com/IbraheemHaseeb7/fyp-backend/jobs"
 	"github.com/IbraheemHaseeb7/pubsub"
 	"github.com/joho/godotenv"
 )
@@ -14,6 +16,7 @@ func main() {
 
 	godotenv.Load()
 	db.Connect()
+	time.LoadLocation("Asia/Karachi")
 
 	amqpURI := os.Getenv("AMQP_STRING")
 	pubsub.Service = "db"
@@ -67,5 +70,9 @@ func main() {
 		},
 		handler.Handle,
 	)
+
+	go func() {
+		jobs.CheckRequestDeadlines(db.DB)
+	}()
 	select {}
 }
