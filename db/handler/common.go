@@ -35,6 +35,9 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"GET_ALL":	GetAllProposals,
 				"GET_ALL_MY":	GetAllMyProposals,
 			},
+			"chats": {
+				"CREATE":	CreateChatRoom,
+			},
 		},
 		"img->db": {
 			"files": {

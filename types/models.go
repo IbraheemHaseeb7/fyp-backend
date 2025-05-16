@@ -70,6 +70,24 @@ type Request struct {
 	User			User
 }
 
+// make RequestID and ProposalID composite key
+type Room struct {
+	ID              int64     		`json:"id" gorm:"primaryKey"`
+	RequestID		int64 			`json:"request_id" validate:"required" gorm:"uniqueIndex:idx_request_proposal"`
+	ProposalID		int64 			`json:"proposal_id" validate:"required" gorm:"uniqueIndex:idx_request_proposal"`
+	CreatedAt 		time.Time 		`json:"created_at" gorm:"created_at;autoCreateTime"`
+	UpdatedAt 		time.Time 		`json:"updated_at" gorm:"updated_at;autoUpdateTime"`
+}
+
+type Message struct {
+	ID              int64     		`json:"id" gorm:"primaryKey"`
+	RoomID			int64 			`json:"room_id" validate:"required"`
+	UserID			int64 			`json:"user_id" validate:"required"`
+	Message			string			`json:"message" validate:"required"`
+	CreatedAt 		time.Time 		`json:"created_at" gorm:"created_at;autoCreateTime"`
+	UpdatedAt 		time.Time 		`json:"updated_at" gorm:"updated_at;autoUpdateTime"`
+}
+
 type Ride struct {
 	DriverID          int64     `json:"driverId"`
 	PassengerID       int64     `json:"passengerId"`

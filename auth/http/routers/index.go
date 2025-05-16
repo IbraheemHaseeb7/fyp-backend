@@ -18,7 +18,7 @@ func IndexRouter(e *echo.Echo, p *pubsub.Publisher) {
 		*
 		* - GET /socket			starts the socket server
 	*/
-	socketServer := sockets.SetupSocket()
+	socketServer := sockets.SetupSocket(p)
 	router.GET("/socket.io/", echo.WrapHandler(socketServer))
 	router.POST("/socket.io/", echo.WrapHandler(socketServer))
 	router.GET("/", func(c echo.Context) error {

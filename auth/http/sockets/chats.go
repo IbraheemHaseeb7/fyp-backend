@@ -1,38 +1,55 @@
 package sockets
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 
+	"github.com/IbraheemHaseeb7/fyp-backend/utils"
+	"github.com/IbraheemHaseeb7/pubsub"
+	"github.com/ThreeDotsLabs/watermill"
 	socketio "github.com/googollee/go-socket.io"
 )
 
 // setup a websocket connection to handle chat messages
-func SetupSocket() *socketio.Server {
+func SetupSocket(p *pubsub.Publisher) *socketio.Server {
 
 	server := socketio.NewServer(nil)
 
 	server.OnConnect("/", func(s socketio.Conn) error {
-		fmt.Println("connected:", s.ID())
 		return nil
 	})
 
 	server.OnEvent("/", "join_private", func(s socketio.Conn, data map[string]string) {
-		userID := data["userId"]
-		peerID := data["peerId"]
-		roomID := fmt.Sprintf("room-%s-%s", userID, peerID)
+		requestID := data["request_id"]
+		proposalID := data["proposal_id"]
 
-		fmt.Printf("🔗 User %s joining private room %s\n", userID, roomID)
+		response, err := CreateChatRoom(map[string]any{
+			"request_id":  requestID,
+			"proposal_id": proposalID,
+		}, p)
 
-		s.Join(roomID)
+		if err != nil {
+			s.Emit("error", map[string]string{
+				"error": err.Error(),
+			})
+			return
+		}
+		if response["error"] != nil {
+			return
+		}
+		roomID := response["data"].(map[string]any)["id"]
+			
+		s.Emit("joined_private", map[string]string{
+			"room": fmt.Sprintf("%v", roomID),
+		})
+		s.Join(fmt.Sprintf("%v", roomID))
 	})
 
 	server.OnEvent("/", "private_message", func(s socketio.Conn, data map[string]string) {
 		roomID := data["room"]
 		message := data["message"]
 		sender := data["sender"]
-
-		fmt.Printf("📩 [%s] %s\n", roomID, message)
 
 		// Send to all members in the room (including sender, or exclude if needed)
 		server.BroadcastToRoom("/", roomID, "private_message", map[string]string{
@@ -53,4 +70,32 @@ func SetupSocket() *socketio.Server {
 	}()
 
 	return server
+}
+
+func CreateChatRoom(reqBody any, p *pubsub.Publisher) (map[string]any, error) {
+	uuid := watermill.NewUUID()
+	utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+
+	payload, err := json.Marshal(reqBody); if err != nil {
+		return nil, err
+	}
+
+	// publishing a read message
+	pubsubMessage := pubsub.PubsubMessage{
+		Entity:    "chats",
+		Operation: "CREATE",
+		Topic:     "auth->db",
+		UUID:      uuid,
+		Payload:   string(payload),
+	}
+
+	err = p.PublishMessage(pubsubMessage)
+	if err != nil {
+		return nil, err
+	}
+
+	response := (<-utils.Requests[pubsubMessage.UUID]).Payload.(map[string]any)
+	delete(utils.Requests, pubsubMessage.UUID)
+
+	return response, nil
 }
