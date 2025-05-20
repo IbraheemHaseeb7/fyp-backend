@@ -11,8 +11,16 @@ import (
 
 func SendEmail(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		email := c.Get("auth_user_email").(string)
-		proposalStatus := c.QueryParam("status")
+		type Request struct {
+			Email string `json:"email" validate:"required,email"`
+			Subject string `json:"subject" validate:"required"`
+			Body   string `json:"body" validate:"required"`
+		}
+		var reqBody Request
+		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
 
 		SMTP_HOST := os.Getenv("SMTP_HOST")
 		port := os.Getenv("SMTP_PORT")
@@ -30,18 +38,10 @@ func SendEmail(cr ControllerRequest) echo.HandlerFunc {
 
 		m := gomail.NewMessage()
 		m.SetHeader("From", SMTP_EMAIL)
-		m.SetHeader("To", email)
+		m.SetHeader("To", reqBody.Email)
 
-		if proposalStatus == "submitted" {
-			m.SetHeader("Subject", "New Proposal on your Request")
-			m.SetBody("text/html", "<p>Somebody just submitted a new proposal on your ride request. Check it out in the app.</p>")
-		} else if proposalStatus == "accepted" {
-			m.SetHeader("Subject", "Proposal accepted for your Request")
-			m.SetBody("text/html", "<p>Somebody just accepted proposal on your ride request. Check it out in the app.</p>")
-		} else if proposalStatus == "rejected" {
-			m.SetHeader("Subject", "Proposal rejected for your Request")
-			m.SetBody("text/html", "<p>Somebody just rejected proposal on your ride request. Check it out in the app.</p>")
-		}
+		m.SetHeader("Subject", reqBody.Subject)
+		m.SetBody("text/html", reqBody.Body)
 
 		if err := d.DialAndSend(m); err != nil {
 			cr.APIResponse.Error = err.Error()

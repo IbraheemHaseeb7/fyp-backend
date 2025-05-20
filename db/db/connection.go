@@ -20,7 +20,7 @@ func Connect() {
 		return
 	}
 
-	if err := db.AutoMigrate(&types.User{}, &types.Vehicle{}, &types.Request{}, &types.Room{}, &types.Message{}); err != nil {
+	if err := db.AutoMigrate(&types.User{}, &types.Vehicle{}, &types.Request{}, &types.Room{}, &types.Message{}, &types.Ride{}); err != nil {
 		fmt.Println(err.Error())
 	}
 

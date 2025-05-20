@@ -51,6 +51,32 @@ func SetupSocket(p *pubsub.Publisher) *socketio.Server {
 		message := data["message"]
 		sender := data["sender"]
 
+		if roomID == "" || message == "" || sender == "" {
+			s.Emit("error", map[string]string{
+				"error": "room, message and sender are required",
+			})
+			return
+		}
+
+		// Store in the database
+		response, err := SendMessage(map[string]any{
+			"room_id": roomID,
+			"sender":  sender,
+			"message": message,
+		}, p)
+		if err != nil {
+			s.Emit("error", map[string]string{
+				"error": err.Error(),
+			})
+			return
+		}
+		if response["error"] != nil {
+			s.Emit("error", map[string]string{
+				"error": response["error"].(string),
+			})
+			return
+		}
+
 		// Send to all members in the room (including sender, or exclude if needed)
 		server.BroadcastToRoom("/", roomID, "private_message", map[string]string{
 			"sender":  sender,
@@ -83,6 +109,34 @@ func CreateChatRoom(reqBody any, p *pubsub.Publisher) (map[string]any, error) {
 	// publishing a read message
 	pubsubMessage := pubsub.PubsubMessage{
 		Entity:    "chats",
+		Operation: "CREATE",
+		Topic:     "auth->db",
+		UUID:      uuid,
+		Payload:   string(payload),
+	}
+
+	err = p.PublishMessage(pubsubMessage)
+	if err != nil {
+		return nil, err
+	}
+
+	response := (<-utils.Requests[pubsubMessage.UUID]).Payload.(map[string]any)
+	delete(utils.Requests, pubsubMessage.UUID)
+
+	return response, nil
+}
+
+func SendMessage(reqBody any, p *pubsub.Publisher) (map[string]any, error) {
+	uuid := watermill.NewUUID()
+	utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+
+	payload, err := json.Marshal(reqBody); if err != nil {
+		return nil, err
+	}
+
+	// publishing a read message
+	pubsubMessage := pubsub.PubsubMessage{
+		Entity:    "messages",
 		Operation: "CREATE",
 		Topic:     "auth->db",
 		UUID:      uuid,

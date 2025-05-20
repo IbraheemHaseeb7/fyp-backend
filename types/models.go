@@ -77,6 +77,8 @@ type Room struct {
 	ProposalID		int64 			`json:"proposal_id" validate:"required" gorm:"uniqueIndex:idx_request_proposal"`
 	CreatedAt 		time.Time 		`json:"created_at" gorm:"created_at;autoCreateTime"`
 	UpdatedAt 		time.Time 		`json:"updated_at" gorm:"updated_at;autoUpdateTime"`
+	Proposal		Request			
+	Request			Request			
 }
 
 type Message struct {
@@ -86,24 +88,36 @@ type Message struct {
 	Message			string			`json:"message" validate:"required"`
 	CreatedAt 		time.Time 		`json:"created_at" gorm:"created_at;autoCreateTime"`
 	UpdatedAt 		time.Time 		`json:"updated_at" gorm:"updated_at;autoUpdateTime"`
+	Room			Room			`json:"room" gorm:"foreignKey:RoomID;references:ID"`
+	User			User			`json:"user" gorm:"foreignKey:UserID;references:ID"`
 }
 
 type Ride struct {
 	DriverID          int64     `json:"driverId"`
 	PassengerID       int64     `json:"passengerId"`
 	ID                int64     `json:"id" gorm:"primaryKey"`
-	DistanceCovered   int       `json:"distanceCovered"`
-	PaymentPercentage uint8     `json:"paymentPercentage"`
+	VehicleID         int64     `json:"vehicle_id"`
+	RequestID         int64     `json:"request_id"`
+	ProposalID		  int64     `json:"proposal_id"`
 	StartTime         time.Time `json:"startTime"`
 	EndTime           time.Time `json:"endTime"`
-	// VehicleID int64 `json:"vehicleId"`
-	// Vehicle Vehicle `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Passenger 	   	  User     
+	Driver 		   	  User     
+	Vehicle 	   	  Vehicle
+	Request			  Request
+	Proposal		  Request
+	CreatedAt         time.Time `json:"createdAt" gorm:"created_at;autoCreateTime"`
+	UpdatedAt         time.Time `json:"updatedAt" gorm:"updated_at;autoUpdateTime"`
+	// DistanceCovered   int       `json:"distanceCovered"`
+	// PaymentPercentage uint8     `json:"paymentPercentage"`
 }
 
 type Feedbacks struct {
 	ID          int64  `json:"id" gorm:"primaryKey"`
-	RideID      int64  `json:"rideId"`
+	RideID      int64  `json:"ride_id"`
+	UserID      int64  `json:"user_Id"`
 	Stars       uint8  `json:"stars"`
 	Description string `json:"description"`
-	// Ride Ride `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Ride 		Ride   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	User 		User   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }

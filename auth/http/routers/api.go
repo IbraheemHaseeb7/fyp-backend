@@ -2,7 +2,9 @@ package routers
 
 import (
 	"github.com/IbraheemHaseeb7/fyp-backend/http/controllers"
+	"github.com/IbraheemHaseeb7/fyp-backend/http/jobs"
 	"github.com/IbraheemHaseeb7/fyp-backend/http/middlewares"
+	"github.com/IbraheemHaseeb7/fyp-backend/utils"
 	"github.com/IbraheemHaseeb7/pubsub"
 	"github.com/labstack/echo/v4"
 )
@@ -11,6 +13,10 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 
 	router := e.Group("/api")
 	router.Use(middlewares.Headers())
+
+	poolSize := 5
+	workerPool := jobs.NewWorkerPool(poolSize)
+	workerPool.Start()
 
 	/*
 			 * AUTH
@@ -84,9 +90,11 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	 *
 	 * This contains all the routes for the emails
 	 *
-	 * - GET /email			sends email just for testing right now
+	 * - POST /email			sends email just for testing right now
+	 * - GET /otp				sends otp to the user
+	 * - POST /verify-otp		verifies the otp sent to the user
 	*/
-	router.GET("/email", controllers.SendEmail(controllers.ControllerRequest{
+	router.POST("/email", controllers.SendEmail(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
 	router.GET("/otp", controllers.SendOTP(controllers.ControllerRequest{
@@ -126,6 +134,32 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 		Publisher: p,
 	}), middlewares.Authenticate())
 
+	/*
+		* RIDES
+		*
+		* This contains all the routes for the rides
+		*
+		* - GET /rides			fetches all the rides from the database
+		* - GET /rides/:id		fetches all the rides from the database
+		* - POST /rides			fetches all the rides from the database
+		* - PATCH /rides/:id		fetches all the rides from the database
+		* - DELETE /rides/:id	fetches all the rides from the database
+	*/
+	router.GET("/rides", controllers.GetAllRides(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.GET("/rides/:id", controllers.GetSingleRide(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.POST("/rides", controllers.CreateRide(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.PATCH("/rides/:id", controllers.UpdateRide(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.DELETE("/rides/:id", controllers.DeleteRide(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 
 	/*
 		* PROPOSALS
@@ -153,4 +187,21 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.GET("/location", controllers.GetLocationName(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
+	router.GET("/", func(c echo.Context) error {
+		
+		interalRequest := utils.NewInternalApiRequest("/api/email", "POST", 
+			map[string]any{
+				"email": "ibraheemibnhaseeb@gmail.com",
+				"subject": "submitted",
+				"body": "submitted",
+			},
+			map[string]string{
+				"Content-Type": "application/json",
+				"Authorization": c.Request().Header.Get("Authorization"),
+			})
+		task := jobs.NewTask(*interalRequest)
+		workerPool.EnqueueTask(task)
+
+		return c.String(200, "Welcome to the API")
+	}, middlewares.Authenticate())
 }

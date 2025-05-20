@@ -31,12 +31,22 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"READ_ONE": GetSingleRequest,
 				"SET_STATUS":SetStatus,
 			},
+			"rides": {
+				"READ_ALL": GetAllRides,
+				"READ_ONE": GetSingleRide,
+				"CREATE":	CreateRide,
+				"UPDATE":	UpdateRide,
+				"DELETE":	DeleteRide,
+			},
 			"proposals": {
 				"GET_ALL":	GetAllProposals,
 				"GET_ALL_MY":	GetAllMyProposals,
 			},
 			"chats": {
 				"CREATE":	CreateChatRoom,
+			},
+			"messages": {
+				"CREATE": SendMessage,
 			},
 		},
 		"img->db": {
