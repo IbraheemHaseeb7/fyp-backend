@@ -99,8 +99,9 @@ type Ride struct {
 	VehicleID         int64     `json:"vehicle_id"`
 	RequestID         int64     `json:"request_id"`
 	ProposalID		  int64     `json:"proposal_id"`
-	StartTime         time.Time `json:"startTime"`
-	EndTime           time.Time `json:"endTime"`
+	StartTime         time.Time `json:"start_time"`
+	EndTime           time.Time `json:"end_time"`
+	Status		   	  string    `json:"status" gorm:"default:'reaching_passenger'"`
 	Passenger 	   	  User     
 	Driver 		   	  User     
 	Vehicle 	   	  Vehicle

@@ -84,7 +84,7 @@ func CreateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	// checking for active requests under this user_id
 	var count int64
 	result := db.DB.Model(&types.Request{}).
-		Where("user_id = ? AND status <> ? AND status <> ?", reqBody.UserID, "completed", "expired").
+		Where("user_id = ? AND status <> ? AND status <> ? AND status <> ?", reqBody.UserID, "completed", "expired", "rejected").
 		Count(&count)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
@@ -195,5 +195,40 @@ func SetStatus(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 
 	return utils.CreateRespondingPubsubMessage(map[string]any{
 		"data": fmt.Sprintf("Successfully updated request's status"),
+	}, pm, "db->auth")
+}
+
+func  GetMyProposalForARequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	var reqBody map[string]any
+	if err := json.Unmarshal([]byte(pm.Payload.(string)), &reqBody); err != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": err.Error(),
+		}, pm, "db->auth")
+	}
+
+	var data types.Request
+	result := db.DB.Model(&types.Request{}).
+		Where("request_id = ? AND user_id = ?", reqBody["request_id"], reqBody["user_id"]).
+		Preload("User", func (db *gorm.DB) *gorm.DB {
+			return db.Select("id, name, email, registration_number")
+		}).
+		Preload("Vehicle", func (db *gorm.DB) *gorm.DB {
+			return db.Select("*")
+		}).
+		Find(&data)
+	if result.Error != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": result.Error.Error(),
+		}, pm, "db->auth")
+	}
+
+	if result.RowsAffected == 0 {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": "Not found",
+		}, pm, "db->auth")
+	}
+
+	return utils.CreateRespondingPubsubMessage(map[string]any{
+		"data": data,
 	}, pm, "db->auth")
 }

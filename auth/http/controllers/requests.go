@@ -264,3 +264,36 @@ func SetStatus(cr ControllerRequest) echo.HandlerFunc {
 	}
 }
 
+func GetMyProposalForARequest(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID := c.Get("auth_user_id").(float64)
+
+		uuid := watermill.NewUUID()
+		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		id, err := strconv.Atoi(c.Param("id")); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		payload, err := json.Marshal(map[string]any{"request_id": id, "user_id": userID}); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		// publishing a read message
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "requests",
+			Operation: "GET_MY_PROPOSAL_FOR_A_REQUEST",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload:   string(payload),
+		}
+		err = cr.Publisher.PublishMessage(pubsubMessage)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		return cr.SendResponse(&c)
+	}
+}

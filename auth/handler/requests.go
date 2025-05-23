@@ -26,3 +26,7 @@ func DeleteRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 func SetStatus(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	return pm, nil
 }
+
+func GetMyProposalForARequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}

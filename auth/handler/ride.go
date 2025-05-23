@@ -22,3 +22,7 @@ func UpdateRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 func DeleteRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	return pm, nil
 }
+
+func ActiveRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}

@@ -190,3 +190,33 @@ func DeleteRide(cr ControllerRequest) echo.HandlerFunc {
 	}
 }
 
+// fetch user's active ride
+func ActiveRide(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userId := c.Get("auth_user_id")
+
+		uuid := watermill.NewUUID()
+		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+
+		payload, err := json.Marshal(map[string]any{"user_id": userId}); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		// publishing a read message
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "rides",
+			Operation: "ACTIVE_RIDE",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload:   string(payload),
+		}
+		err = cr.Publisher.PublishMessage(pubsubMessage)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		return cr.SendResponse(&c)
+	}
+}

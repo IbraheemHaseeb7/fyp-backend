@@ -30,6 +30,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"READ_ALL":	GetAllRequests,
 				"READ_ONE": GetSingleRequest,
 				"SET_STATUS":SetStatus,
+				"GET_MY_PROPOSAL_FOR_A_REQUEST": GetMyProposalForARequest,
 			},
 			"rides": {
 				"READ_ALL": GetAllRides,
@@ -37,6 +38,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"CREATE":	CreateRide,
 				"UPDATE":	UpdateRide,
 				"DELETE":	DeleteRide,
+				"ACTIVE_RIDE":	ActiveRide,
 			},
 			"proposals": {
 				"GET_ALL":	GetAllProposals,

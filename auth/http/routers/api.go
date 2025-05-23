@@ -133,6 +133,9 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.POST("/requests/set-status", controllers.SetStatus(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
+	router.GET("/my-proposal/:id", controllers.GetMyProposalForARequest(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 
 	/*
 		* RIDES
@@ -158,6 +161,9 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 		Publisher: p,
 	}), middlewares.Authenticate())
 	router.DELETE("/rides/:id", controllers.DeleteRide(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.GET("/active-ride", controllers.ActiveRide(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
 
