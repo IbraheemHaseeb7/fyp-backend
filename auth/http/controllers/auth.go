@@ -43,7 +43,7 @@ func Signup(cr ControllerRequest) echo.HandlerFunc {
 		reqBody.Password = hashedPwd
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a create message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -112,7 +112,7 @@ func Login(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a create message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -166,7 +166,7 @@ func Me(cr ControllerRequest) echo.HandlerFunc {
 		regNo := c.Get("auth_user_registration_number").(string)
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -221,7 +221,7 @@ func UpdateUser(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -254,7 +254,7 @@ func VerifyOTP(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		payload, err := json.Marshal(map[string]string{
 			"otp": request.OTP,
@@ -319,7 +319,7 @@ func SendOTP(cr ControllerRequest) echo.HandlerFunc {
 		// storing in database
 		// publishing a create message
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		pubsubMessage := pubsub.PubsubMessage{
 			Entity:    "users",
 			Operation: "STORE_OTP",

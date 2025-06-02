@@ -46,9 +46,14 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 			},
 			"chats": {
 				"CREATE": CreateChatRoom,
+				"GET_MESSAGES": GetChatMessages,
 			},
 			"messages": {
 				"CREATE": SendMessage,
+			},
+			"rooms": {
+				"READ_ONE": GetRoom,
+				"READ_WITH_IDS": GetRoomWithIDs,
 			},
 		},
 		"img->auth": {

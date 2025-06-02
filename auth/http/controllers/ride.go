@@ -17,7 +17,7 @@ func GetAllRides(cr ControllerRequest) echo.HandlerFunc {
 		userId := c.Get("auth_user_id").(float64)
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		page, err := strconv.Atoi(c.QueryParam("page")); if err != nil {
 			cr.APIResponse.Error = err.Error()
 			return cr.SendErrorResponse(&c)
@@ -51,7 +51,7 @@ func GetSingleRide(cr ControllerRequest) echo.HandlerFunc {
 		userId := c.Get("auth_user_id").(float64)
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		id := c.Param("id")
 
 		payload, err := json.Marshal(map[string]any{"id": id, "user_id": userId}); if err != nil {
@@ -80,7 +80,7 @@ func GetSingleRide(cr ControllerRequest) echo.HandlerFunc {
 func CreateRide(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		type Ride struct {
 			VehicleID int64 `json:"vehicle_id" validate:"required"`
@@ -127,7 +127,7 @@ func CreateRide(cr ControllerRequest) echo.HandlerFunc {
 func UpdateRide(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		id := c.Param("id")
 
 		var reqBody types.Ride
@@ -164,7 +164,7 @@ func DeleteRide(cr ControllerRequest) echo.HandlerFunc {
 		userId := c.Get("auth_user_id").(float64)
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		id := c.Param("id")
 
 		payload, err := json.Marshal(map[string]any{"id": id, "user_id": userId}); if err != nil {
@@ -196,7 +196,7 @@ func ActiveRide(cr ControllerRequest) echo.HandlerFunc {
 		userId := c.Get("auth_user_id")
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		payload, err := json.Marshal(map[string]any{"user_id": userId}); if err != nil {
 			cr.APIResponse.Error = err.Error()

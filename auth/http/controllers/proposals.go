@@ -24,7 +24,7 @@ func GetAllProposals(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -56,7 +56,7 @@ func GetAllMyProposals(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{

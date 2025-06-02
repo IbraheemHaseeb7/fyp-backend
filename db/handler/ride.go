@@ -40,7 +40,7 @@ func GetAllRides(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 func GetSingleRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	type Query struct {
 		ID     string `json:"id"`
-		UserID string `json:"user_id"`
+		UserID int `json:"user_id"`
 	}
 
 	var query Query
@@ -51,7 +51,17 @@ func GetSingleRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	}
 
 	var ride types.Ride
-	result := db.DB.Model(&types.Ride{}).Where("id = ? AND user_id = ?", query.ID, query.UserID).First(&ride)
+	result := db.DB.Model(&types.Ride{}).Where("id = ? AND (driver_id = ? OR passenger_id = ?)", query.ID, query.UserID, query.UserID).
+		Preload("Driver", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, name, email")
+		}).
+		Preload("Passenger", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, name, email")
+		}).
+		Preload("Vehicle").
+		Preload("Request").
+		Preload("Proposal").
+		First(&ride)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),

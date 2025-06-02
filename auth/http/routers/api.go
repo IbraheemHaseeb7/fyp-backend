@@ -138,6 +138,24 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	}), middlewares.Authenticate())
 
 	/*
+		* ROOMS
+		*
+		* This contains all the routes for the rooms
+		*
+		* - GET /rooms/:id		fetches all the rooms from the database
+		*
+	*/
+	router.GET("/rooms/:id", controllers.GetRoom(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.GET("/rooms", controllers.GetRoomWithIDs(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.GET("/chats/:room_id", controllers.ChatMessages(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+
+	/*
 		* RIDES
 		*
 		* This contains all the routes for the rides

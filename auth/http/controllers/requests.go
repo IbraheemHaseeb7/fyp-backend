@@ -15,7 +15,7 @@ import (
 func GetAllRequests(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		page, err := strconv.Atoi(c.QueryParam("page")); if err != nil {
 			cr.APIResponse.Error = err.Error()
 			return cr.SendErrorResponse(&c)
@@ -58,7 +58,7 @@ func GetSingleRequest(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		id, err := strconv.Atoi(c.Param("id")); if err != nil {
 			cr.APIResponse.Error = err.Error()
 			return cr.SendErrorResponse(&c)
@@ -99,7 +99,7 @@ func CreateRequest(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		payload, err := json.Marshal(reqBody); if err != nil {
 			cr.APIResponse.Error = err.Error()
@@ -169,7 +169,7 @@ func UpdateRequest(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -193,7 +193,7 @@ func DeleteRequest(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		id, err := strconv.Atoi(c.Param("id")); if err != nil {
 			cr.APIResponse.Error = err.Error()
 			return cr.SendErrorResponse(&c)
@@ -244,7 +244,7 @@ func SetStatus(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -269,7 +269,7 @@ func GetMyProposalForARequest(cr ControllerRequest) echo.HandlerFunc {
 		userID := c.Get("auth_user_id").(float64)
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		id, err := strconv.Atoi(c.Param("id")); if err != nil {
 			cr.APIResponse.Error = err.Error()
 			return cr.SendErrorResponse(&c)

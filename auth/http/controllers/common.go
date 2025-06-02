@@ -81,8 +81,8 @@ func (cr *ControllerRequest) SendResponse(c *echo.Context) error {
 }
 
 func (cr *ControllerRequest) GetAndFormResponse(pubsubMessage pubsub.PubsubMessage) {
-	response := (<-utils.Requests[pubsubMessage.UUID]).Payload.(map[string]any)
-	delete(utils.Requests, pubsubMessage.UUID)
+	response := (<-utils.Requests.Load(pubsubMessage.UUID)).Payload.(map[string]any)
+	utils.Requests.Delete(pubsubMessage.UUID)
 
 	if response["status"] == nil {
 		response["status"] = ""

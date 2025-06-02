@@ -15,6 +15,7 @@ func main() {
 
 	godotenv.Load()
 	amqpURI := os.Getenv("AMQP_STRING")
+	utils.Requests = utils.NewSafeMap()
 
 	// creating a publisher
 	publisher, err := pubsub.NewPublisher(&pubsub.Publisher{
@@ -37,7 +38,7 @@ func main() {
 	auth2dbSubscriber.ConsumeMessages(
 		"db->auth",
 		func(pm pubsub.PubsubMessage) {
-			utils.Requests[pm.UUID] <- pm
+			utils.Requests.Load(pm.UUID) <- pm
 		},
 		handler.Handle,
 	)

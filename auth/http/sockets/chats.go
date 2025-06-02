@@ -47,6 +47,7 @@ func SetupSocket(p *pubsub.Publisher) *socketio.Server {
 	})
 
 	server.OnEvent("/", "private_message", func(s socketio.Conn, data map[string]string) {
+		fmt.Println("I am called")
 		roomID := data["room"]
 		message := data["message"]
 		sender := data["sender"]
@@ -100,7 +101,7 @@ func SetupSocket(p *pubsub.Publisher) *socketio.Server {
 
 func CreateChatRoom(reqBody any, p *pubsub.Publisher) (map[string]any, error) {
 	uuid := watermill.NewUUID()
-	utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+	utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 	payload, err := json.Marshal(reqBody); if err != nil {
 		return nil, err
@@ -120,15 +121,15 @@ func CreateChatRoom(reqBody any, p *pubsub.Publisher) (map[string]any, error) {
 		return nil, err
 	}
 
-	response := (<-utils.Requests[pubsubMessage.UUID]).Payload.(map[string]any)
-	delete(utils.Requests, pubsubMessage.UUID)
+	response := (<-utils.Requests.Load(pubsubMessage.UUID)).Payload.(map[string]any)
+	utils.Requests.Delete(pubsubMessage.UUID)
 
 	return response, nil
 }
 
 func SendMessage(reqBody any, p *pubsub.Publisher) (map[string]any, error) {
 	uuid := watermill.NewUUID()
-	utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+	utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 	payload, err := json.Marshal(reqBody); if err != nil {
 		return nil, err
@@ -148,8 +149,8 @@ func SendMessage(reqBody any, p *pubsub.Publisher) (map[string]any, error) {
 		return nil, err
 	}
 
-	response := (<-utils.Requests[pubsubMessage.UUID]).Payload.(map[string]any)
-	delete(utils.Requests, pubsubMessage.UUID)
+	response := (<-utils.Requests.Load(pubsubMessage.UUID)).Payload.(map[string]any)
+	utils.Requests.Delete(pubsubMessage.UUID)
 
 	return response, nil
 }

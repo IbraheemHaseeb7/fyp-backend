@@ -16,7 +16,7 @@ func ReadOneVehicle(cr ControllerRequest) echo.HandlerFunc {
 		regNo := c.Get("auth_user_registration_number").(string)
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -55,7 +55,7 @@ func ReadAllVehicles(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		page := c.QueryParam("page")
 
 		// publishing a read message
@@ -100,7 +100,7 @@ func CreateVehicle(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		reqBody.UserID = id
 
@@ -158,7 +158,7 @@ func UpdateVehicle(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		reqBody.UserID = id
 		vId, err := strconv.Atoi(c.Param("id"))
@@ -210,7 +210,7 @@ func DeleteVehicle(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{

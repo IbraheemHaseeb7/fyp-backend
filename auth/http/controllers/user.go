@@ -12,7 +12,7 @@ func CreateUsers(cr ControllerRequest) echo.HandlerFunc {
 		c.Response().Header().Add("Content-Type", "application/json")
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a create message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -45,7 +45,7 @@ func ReadAllUsers(cr ControllerRequest) echo.HandlerFunc {
 		c.Response().Header().Add("Content-Type", "application/json")
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubsMessage := pubsub.PubsubMessage{
@@ -70,7 +70,7 @@ func ReadOneUser(cr ControllerRequest) echo.HandlerFunc {
 		regNo := c.Param("id")
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{

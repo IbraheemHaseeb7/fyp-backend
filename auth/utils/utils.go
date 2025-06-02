@@ -7,14 +7,12 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-
-	"github.com/IbraheemHaseeb7/pubsub"
 )
 
-var Requests map[string](chan pubsub.PubsubMessage)
+var Requests *SafeMap
 
-func StructToMap(data interface{}) (map[string]interface{}, error) {
-    result := make(map[string]interface{})
+func StructToMap(data any) (map[string]any, error) {
+    result := make(map[string]any)
     v := reflect.ValueOf(data)
     t := v.Type()
 
