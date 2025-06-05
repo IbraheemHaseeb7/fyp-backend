@@ -17,7 +17,7 @@ func Authenticate(cr controllers.ControllerRequest) echo.MiddlewareFunc {
 			tokenHeader := strings.Split(c.Request().Header.Get("Authorization"), " ")
 			if len(tokenHeader) > 1 {
 				uuid := watermill.NewUUID()
-				utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+				utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 				cr.Publisher.PublishMessage(pubsub.PubsubMessage{
 					Payload: map[string]string{
@@ -28,8 +28,8 @@ func Authenticate(cr controllers.ControllerRequest) echo.MiddlewareFunc {
 					UUID:      uuid,
 					Topic:     "img->auth",
 				})
-				authResp := <-utils.Requests[uuid]
-				delete(utils.Requests, uuid)
+				authResp := <-utils.Requests.Load(uuid)
+				utils.Requests.Delete(uuid)
 
 				payload, ok := authResp.Payload.(map[string]any)
 				if !ok {

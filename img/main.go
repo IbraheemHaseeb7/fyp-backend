@@ -14,6 +14,7 @@ import (
 func main() {
 
 	godotenv.Load()
+	utils.Requests = utils.NewSafeMap()
 
 	publisher, err := pubsub.NewPublisher(&pubsub.Publisher{
 		URI:   os.Getenv("AMQP_STRING"),
@@ -35,7 +36,7 @@ func main() {
 	img2authSubscriber.ConsumeMessages(
 		"auth->img",
 		func(pm pubsub.PubsubMessage) {
-			utils.Requests[pm.UUID] <- pm
+			utils.Requests.Load(pm.UUID) <- pm
 		},
 		handler.Handle,
 	)
@@ -51,7 +52,7 @@ func main() {
 	img2dbSubscriber.ConsumeMessages(
 		"db->img",
 		func(pm pubsub.PubsubMessage) {
-			utils.Requests[pm.UUID] <- pm
+			utils.Requests.Load(pm.UUID) <- pm
 		},
 		handler.Handle,
 	)

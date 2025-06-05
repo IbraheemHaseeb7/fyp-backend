@@ -104,8 +104,7 @@ func UpdateRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 			"error": err.Error(),
 		}, pm, "db->auth")
 	}
-
-	result := db.DB.Model(&types.Ride{}).Where("id = ? AND user_id = ?", requestBody["id"], requestBody["user_id"]).Updates(requestBody)
+	result := db.DB.Model(&types.Ride{}).Where("id = ? AND driver_id = ?", requestBody["id"], requestBody["user_id"]).Updates(requestBody["data"])
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),

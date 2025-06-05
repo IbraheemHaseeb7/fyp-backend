@@ -47,7 +47,6 @@ func SetupSocket(p *pubsub.Publisher) *socketio.Server {
 	})
 
 	server.OnEvent("/", "private_message", func(s socketio.Conn, data map[string]string) {
-		fmt.Println("I am called")
 		roomID := data["room"]
 		message := data["message"]
 		sender := data["sender"]
@@ -84,6 +83,21 @@ func SetupSocket(p *pubsub.Publisher) *socketio.Server {
 			"message": message,
 		})
 	})
+
+	server.OnEvent("/", "user_locations", func(s socketio.Conn, data map[string]any) {
+		roomID := data["room"].(string)
+		userID := data["user"]
+
+		if roomID == "" || userID == "" {
+			s.Emit("error", map[string]string{
+				"error": "room, user and locations are required",
+			})
+			return
+		}
+		// Broadcast user locations to all members in the room
+		server.BroadcastToRoom("/", roomID, "user_locations", data)
+	})
+
 
 	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
 		fmt.Println("disconnected:", s.ID(), "reason:", reason)

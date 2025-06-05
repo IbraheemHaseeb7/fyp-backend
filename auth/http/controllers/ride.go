@@ -7,7 +7,6 @@ import (
 
 	"github.com/IbraheemHaseeb7/fyp-backend/utils"
 	"github.com/IbraheemHaseeb7/pubsub"
-	"github.com/IbraheemHaseeb7/types"
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/labstack/echo/v4"
 )
@@ -129,14 +128,20 @@ func UpdateRide(cr ControllerRequest) echo.HandlerFunc {
 		uuid := watermill.NewUUID()
 		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 		id := c.Param("id")
+		userId := c.Get("auth_user_id")
 
-		var reqBody types.Ride
+		type Ride struct {
+			StartTime         string 	 `json:"start_time,omitempty"`
+			EndTime           string	 `json:"end_time,omitempty"`
+			Status		   	  string   	 `json:"status,omitempty"`
+		}
+		var reqBody Ride
 		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
 			cr.APIResponse.Error = err.Error()
 			return cr.SendErrorResponse(&c)
 		}
 
-		payload, err := json.Marshal(map[string]any{"id": id, "data": reqBody}); if err != nil {
+		payload, err := json.Marshal(map[string]any{"id": id, "data": reqBody, "user_id": userId}); if err != nil {
 			cr.APIResponse.Error = err.Error()
 			return cr.SendErrorResponse(&c)
 		}

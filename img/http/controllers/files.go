@@ -162,7 +162,7 @@ func DeleteFiles(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		cr.Publisher.PublishMessage(pubsub.PubsubMessage{
 			Payload: map[string]string{
@@ -173,8 +173,8 @@ func DeleteFiles(cr ControllerRequest) echo.HandlerFunc {
 			UUID:      uuid,
 			Topic:     "img->auth",
 		})
-		authResp := <-utils.Requests[uuid]
-		delete(utils.Requests, uuid)
+		authResp := <-utils.Requests.Load(uuid)
+		utils.Requests.Delete(uuid)
 
 		payload, ok := authResp.Payload.(map[string]any)
 		if !ok {

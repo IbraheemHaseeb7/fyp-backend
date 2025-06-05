@@ -3,11 +3,9 @@ package utils
 import (
 	"crypto/sha256"
 	"encoding/hex"
-
-	"github.com/IbraheemHaseeb7/pubsub"
 )
 
-var Requests map[string](chan pubsub.PubsubMessage)
+var Requests *SafeMap
 
 func GenerateHash(data map[string]string) string {
 

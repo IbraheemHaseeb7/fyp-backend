@@ -26,7 +26,7 @@ func VerifyCard(cr ControllerRequest) echo.HandlerFunc {
 
 		// store in database that the student card is verified
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{
@@ -67,7 +67,7 @@ func VerifySelfie(cr ControllerRequest) echo.HandlerFunc {
 
 		// store in database that the student card is verified
 		uuid := watermill.NewUUID()
-		utils.Requests[uuid] = make(chan pubsub.PubsubMessage)
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
 
 		// publishing a read message
 		pubsubMessage := pubsub.PubsubMessage{
