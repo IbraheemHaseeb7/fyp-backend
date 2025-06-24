@@ -15,6 +15,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"STORE_OTP": StoreOTP,
 				"VERIFY_OTP": VerifyOTP,
 				"UPDATE_ONE": UpdateUser,
+				"STORE_DEVICE_TOKEN": StoreDeviceToken,
 			},
 			"vehicles": {
 				"READ_ALL": ReadAllVehicles,
@@ -31,6 +32,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"DELETE":	DeleteRequest,
 				"SET_STATUS": SetStatus,
 				"GET_MY_PROPOSAL_FOR_A_REQUEST": GetMyProposalForARequest,
+				"GET_MATCHES": GetMatches,
 			},
 			"rides": {
 				"READ_ALL": GetAllRides,
@@ -54,6 +56,9 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 			"rooms": {
 				"READ_ONE": GetRoom,
 				"READ_WITH_IDS": GetRoomWithIDs,
+			},
+			"feedback": {
+				"CREATE": AddFeedback,
 			},
 		},
 		"img->auth": {

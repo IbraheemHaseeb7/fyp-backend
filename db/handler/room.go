@@ -23,10 +23,10 @@ func GetRoom(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		Preload("Request").
 		Preload("Proposal").
 		Preload("Proposal.User", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "email")
+			return db.Select("id", "name", "email", "device_token")
 		}).
 		Preload("Request.User", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "email")
+			return db.Select("id", "name", "email", "device_token")
 		}).
 		Where("id = ?", reqBody["room_id"]).First(&room)
 	if result.Error != nil {
@@ -54,10 +54,10 @@ func GetRoomWithIDs(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		Preload("Request").
 		Preload("Proposal").
 		Preload("Proposal.User", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "email")
+			return db.Select("id", "name", "email", "device_token")
 		}).
 		Preload("Request.User", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id", "name", "email")
+			return db.Select("id", "name", "email", "device_token")
 		}).
 		Where("request_id = ? AND proposal_id = ?", reqBody["request_id"], reqBody["proposal_id"]).First(&room)
 	if result.Error != nil {

@@ -59,6 +59,9 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.POST("/user", controllers.CreateUsers(controllers.ControllerRequest{
 		Publisher: p,
 	}))
+	router.POST("/store-device-token", controllers.StoreDeviceToken(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 
 	/*
 	 * VEHICLES
@@ -134,6 +137,9 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 		Publisher: p,
 	}), middlewares.Authenticate())
 	router.GET("/my-proposal/:id", controllers.GetMyProposalForARequest(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.POST("/find-matches", controllers.GetMatches(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
 
@@ -228,4 +234,26 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 
 		return c.String(200, "Welcome to the API")
 	}, middlewares.Authenticate())
+
+	/*
+		* FEEDBACK
+		*
+		* This contains all the routes for the feedback
+		*
+		* - POST /feedback			fetches the feedback from the user
+	*/
+	router.POST("/feedback", controllers.AddFeedback(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+
+	/*
+		* NOTIFICATIONS
+		*
+		* This contains all the routes for the notifications
+		*
+		* - POST /notifications			sends push notifications to the user
+	*/
+	router.POST("/push-notification", controllers.SendNotification(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 }

@@ -297,3 +297,56 @@ func GetMyProposalForARequest(cr ControllerRequest) echo.HandlerFunc {
 		return cr.SendResponse(&c)
 	}
 }
+
+func GetMatches(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+
+		type Request struct {
+			FromLat			float64	`json:"from_lat" validate:"required"`
+			FromLong 		float64	`json:"from_long" validate:"required"`
+			ToLat			float64	`json:"to_lat" validate:"required"`
+			ToLong			float64	`json:"to_long" validate:"required"`
+			Id				float64	`json:"id" validate:"required"`
+			OriginatorRole 	string	`json:"originator_role" validate:"required"`
+			VehicleType 	string	`json:"vehicle_type" validate:"required"`
+		}
+
+		var reqBody Request
+		if err := cr.BindAndValidate(&reqBody, &c); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		uuid := watermill.NewUUID()
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
+
+		payload, err := json.Marshal(map[string]any{
+			"id": reqBody.Id,
+			"from_lat":  reqBody.FromLat,
+			"from_long": reqBody.FromLong,
+			"to_lat":    reqBody.ToLat,
+			"to_long":   reqBody.ToLong,
+			"originator_role": reqBody.OriginatorRole,
+			"vehicle_type": reqBody.VehicleType,
+		}); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		// publishing a read message
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "requests",
+			Operation: "GET_MATCHES",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload:   string(payload),
+		}
+		err = cr.Publisher.PublishMessage(pubsubMessage)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		return cr.SendResponse(&c)
+	}
+}

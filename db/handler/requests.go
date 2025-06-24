@@ -23,6 +23,7 @@ func GetAllRequests(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 
 	var requests []types.Request
 	query := db.DB.Model(&types.Request{}).
+		Select("requests.*, (select round(avg(stars), 2) from feedbacks where user_id = requests.user_id) as rating").
 		Preload("Vehicle").
 		Preload("User").
 		Limit(20).
@@ -58,7 +59,7 @@ func GetSingleRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	var request types.Request
 	result := db.DB.Model(&types.Request{}).Preload("Vehicle").
 		Preload("User", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email, registration_number")
+			return db.Select("id, name, email, registration_number, device_token")
 		}).
 		Where("id = ?", reqBody.ID).First(&request)
 	if result.Error != nil {
@@ -186,6 +187,25 @@ func SetStatus(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		}, pm, "db->auth")
 	}
 
+	id := fmt.Sprintf("%v", reqBody["id"])
+	if reqBody["status"] == "matched" || reqBody["status"] == "ride_started" {
+		var count int64
+		result := db.DB.Model(&types.Request{}).
+			Select("case when request_id is null then (select count(*) as 'count' from requests where id="+id+" or request_id="+id+" and status='matched') else (select count(*) as 'count' from requests where id=(select request_id from requests where id="+id+") or request_id=(select request_id from requests where id="+id+") and status='matched') end as 'count'").
+			Where("id = ?", reqBody["id"]).
+			Find(&count)
+		if result.Error != nil {
+			return utils.CreateRespondingPubsubMessage(map[string]any{
+				"error": result.Error.Error(),
+			}, pm, "db->auth")
+		}
+		if count > 2 {
+			return utils.CreateRespondingPubsubMessage(map[string]any{
+				"error": "You already have a matched request",
+			}, pm, "db->auth")
+		}
+	}
+
 	result := db.DB.Model(&types.Request{}).Where("id = ?", reqBody["id"]).Update("status", reqBody["status"])
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
@@ -230,5 +250,49 @@ func  GetMyProposalForARequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, e
 
 	return utils.CreateRespondingPubsubMessage(map[string]any{
 		"data": data,
+	}, pm, "db->auth")
+}
+
+func GetMatches(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	var reqBody map[string]any
+	if err := json.Unmarshal([]byte(pm.Payload.(string)), &reqBody); err != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": err.Error(),
+		}, pm, "db->auth")
+	}
+
+	type RequestResult struct {
+		ID             uint
+		Status         string
+		OriginatorRole string
+		VehicleType    string
+		FromName       string
+		ToName         string
+		FromDistance   float64
+		ToDistance     float64
+	}
+
+	if reqBody["originator_role"].(string) == "rider" {
+		reqBody["originator_role"] = "passenger"
+	} else {
+		reqBody["originator_role"] = "rider"
+	}
+
+	var results []RequestResult
+	db.DB.Raw(`
+		SELECT id, status, originator_role, vehicle_type, from_name, to_name,
+		(6371 * acos(cos(radians(?)) * cos(radians(from_lat)) * cos(radians(from_long) - radians(?)) + sin(radians(?)) * sin(radians(from_lat)))) AS from_distance,
+		(6371 * acos(cos(radians(?)) * cos(radians(to_lat)) * cos(radians(to_long) - radians(?)) + sin(radians(?)) * sin(radians(to_lat)))) AS to_distance
+		FROM requests
+		WHERE id <> ? AND status = ? AND originator_role = ? AND from_distance < 10 AND to_distance < 10 and vehicle_type = ?
+		ORDER BY from_distance + to_distance
+		LIMIT 10
+		`, 
+		reqBody["from_lat"], reqBody["from_long"], reqBody["from_lat"], // From lat/lon
+		reqBody["to_lat"], reqBody["to_long"], reqBody["to_lat"], // To lat/lon
+		reqBody["id"], "searching", reqBody["originator_role"], reqBody["vehicle_type"]).Scan(&results)
+
+	return utils.CreateRespondingPubsubMessage(map[string]any{
+		"data": results,
 	}, pm, "db->auth")
 }

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/IbraheemHaseeb7/fyp-backend/db"
 	"github.com/IbraheemHaseeb7/fyp-backend/utils"
@@ -53,10 +52,10 @@ func GetSingleRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	var ride types.Ride
 	result := db.DB.Model(&types.Ride{}).Where("id = ? AND (driver_id = ? OR passenger_id = ?)", query.ID, query.UserID, query.UserID).
 		Preload("Driver", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email")
+			return db.Select("id, name, email, device_token")
 		}).
 		Preload("Passenger", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email")
+			return db.Select("id, name, email, device_token")
 		}).
 		Preload("Vehicle").
 		Preload("Request").
@@ -152,7 +151,6 @@ func DeleteRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 
 
 func ActiveRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
-	fmt.Println("ActiveRide")
 	type Query struct {
 		UserID float64 `json:"user_id"`
 	}
@@ -165,12 +163,12 @@ func ActiveRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 
 	var ride types.Ride
 	result := db.DB.Model(&types.Ride{}).
-		Where("request_id = (select id from requests where user_id = ? and status = ?)", query.UserID, "matched").
+		Where("request_id = (select id from requests where user_id = ? and status = ?) OR proposal_id = (select id from requests where user_id = ? and status = ?)", query.UserID, "matched", query.UserID, "matched").
 		Preload("Driver", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email")
+			return db.Select("id, name, email, device_token")
 		}).
 		Preload("Passenger", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email")
+			return db.Select("id, name, email, device_token")
 		}).
 		Preload("Vehicle").
 		Preload("Request").

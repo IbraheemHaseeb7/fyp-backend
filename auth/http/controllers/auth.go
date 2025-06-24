@@ -191,11 +191,12 @@ func UpdateUser(cr ControllerRequest) echo.HandlerFunc {
 		type Request struct {
 			Name               string `json:"name" validate:""`
 			DOB                string `json:"dob" validate:""`
-			StudentCardURI     string `json:"studentCardURI"`
-			LivePictureURI     string `json:"livePictureURI"`
+			StudentCardURI     string `json:"student_card_uri"`
+			LivePictureURI     string `json:"live_picture_uri"`
 			Department         string `json:"department"`
 			Semester           int8   `json:"semester" validate:"omitempty,gte=1,lte=12"`
 			Email              string `json:"email" validate:"omitempty,cui-email"`
+			ProfileURI         string `json:"profile_uri" validate:""`
 		}
 		var reqBody Request
 		if err := cr.BindAndValidate(&reqBody, &c); err != nil {

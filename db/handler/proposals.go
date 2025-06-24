@@ -31,7 +31,7 @@ func GetAllProposals(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	result = db.DB.Model(&types.Request{}).
 		Where("request_id = ?", reqBody["request_id"]).
 		Preload("User", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email, registration_number")
+			return db.Select("id, name, email, registration_number, device_token")
 		}).
 		Preload("Vehicle", func (db *gorm.DB) *gorm.DB {
 			return db.Select("*")
@@ -60,7 +60,7 @@ func GetAllMyProposals(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	var data []types.Request
 	result := db.DB.Model(&types.Request{}).
 		Preload("User", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email, registration_number")
+			return db.Select("id, name, email, registration_number, device_token")
 		}).
 		Preload("Vehicle", func (db *gorm.DB) *gorm.DB {
 			return db.Select("*")

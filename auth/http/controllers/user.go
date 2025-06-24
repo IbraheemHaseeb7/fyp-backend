@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/IbraheemHaseeb7/fyp-backend/utils"
 	"github.com/IbraheemHaseeb7/pubsub"
 	"github.com/ThreeDotsLabs/watermill"
@@ -79,6 +81,41 @@ func ReadOneUser(cr ControllerRequest) echo.HandlerFunc {
 			Topic:     "auth->db",
 			UUID:      uuid,
 			Payload:   `{"registrationNumber": "` + regNo + `"}`,
+		}
+		err := cr.Publisher.PublishMessage(pubsubMessage)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		return cr.SendResponse(&c)
+	}
+}
+
+func StoreDeviceToken(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id := c.Get("auth_user_id")
+
+		type Request struct {
+			DeviceToken string `json:"device_token" validate:"required"`
+		}
+		var request Request
+
+		if err := cr.BindAndValidate(&request, &c); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		uuid := watermill.NewUUID()
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
+
+		// publishing a store device token message
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "users",
+			Operation: "STORE_DEVICE_TOKEN",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload: fmt.Sprintf(`{"id": %f, "device_token": "%s"}`, id, request.DeviceToken),
 		}
 		err := cr.Publisher.PublishMessage(pubsubMessage)
 		if err != nil {

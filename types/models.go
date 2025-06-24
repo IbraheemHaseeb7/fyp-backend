@@ -11,6 +11,7 @@ type User struct {
 	ID                 int64     		`json:"id,omitempty" gorm:"primaryKey"`
 	Password           string    		`json:"password,omitempty"`
 	StudentCardURI     string    		`json:"studentCardURI,omitempty"`
+	ProfileURI		   string    		`json:"profileURI,omitempty"`
 	LivePictureURI     string    		`json:"livePictureURI,omitempty"`
 	CreatedAt          time.Time 		`json:"createdAt,omitempty" gorm:"created_at;autoCreateTime"`
 	UpdatedAt          time.Time 		`json:"updatedAt,omitempty" gorm:"updated_at;autoUpdateTime"`
@@ -22,6 +23,7 @@ type User struct {
 	CardVerifiedAt	   sql.NullTime		`json:"cardVerified,omitempty" gorm:"default:null"`
 	SelfieVerifiedAt   sql.NullTime		`json:"selfieVerified,omitempty" gorm:"default:null"`
 	OTP				   sql.NullInt16	`json:"otp,omitempty" gorm:"default:null"false`
+	DeviceToken		   string    		`json:"device_token,omitempty"`
 }
 
 type Vehicle struct {
@@ -68,6 +70,7 @@ type Request struct {
 	UpdatedAt 		time.Time 		`json:"updated_at" gorm:"updated_at;autoUpdateTime"`
 	Vehicle			Vehicle			
 	User			User
+	Rating			float64			`json:"rating"`
 }
 
 // make RequestID and ProposalID composite key
@@ -113,12 +116,14 @@ type Ride struct {
 	// PaymentPercentage uint8     `json:"paymentPercentage"`
 }
 
-type Feedbacks struct {
+type Feedback struct {
 	ID          int64  `json:"id" gorm:"primaryKey"`
-	RideID      int64  `json:"ride_id"`
+	RideID      int64  `json:"ride_id" gorm:"uniqueIndex:idx_ride_user"`
 	UserID      int64  `json:"user_Id"`
 	Stars       uint8  `json:"stars"`
 	Description string `json:"description"`
+	CreatedAt         time.Time `json:"createdAt" gorm:"created_at;autoCreateTime"`
+	UpdatedAt         time.Time `json:"updatedAt" gorm:"updated_at;autoUpdateTime"`
 	Ride 		Ride   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	User 		User   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }

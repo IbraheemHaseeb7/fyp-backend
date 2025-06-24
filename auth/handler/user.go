@@ -31,3 +31,7 @@ func VerifyOTP(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 func UpdateUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	return pm, nil
 }
+
+func StoreDeviceToken(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}
