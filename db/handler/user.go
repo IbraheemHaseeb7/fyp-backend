@@ -47,6 +47,19 @@ func Login(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	var user types.User
 	db.DB.Model(&types.User{}).Where("registration_number = ?", query.RegistrationNumber).Find(&user)
 
+	if user.Password == "" {
+		return pubsub.PubsubMessage{
+			Payload: map[string]any{
+				"status": "Could not find user",
+				"error":  "Please make sure to enter correct details",
+			},
+			Entity:    pm.Entity,
+			Operation: pm.Operation,
+			Topic:     "db->auth",
+			UUID:      pm.UUID,
+		}, nil
+	}
+
 	return pubsub.PubsubMessage{
 		Payload: map[string]any{
 			"data":   user,

@@ -132,6 +132,10 @@ func Login(cr ControllerRequest) echo.HandlerFunc {
 
 		cr.GetAndFormResponse(pubsubMessage)
 
+		if cr.APIResponse.Error != "" && cr.APIResponse.Error != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
 		// verifying password
 		if !auth.CheckPasswordHash(reqBody.Password, cr.APIResponse.Data.(map[string]any)["password"].(string)) {
 			cr.APIResponse.Status = "Invalid email or password"

@@ -98,6 +98,46 @@ func SetupSocket(p *pubsub.Publisher) *socketio.Server {
 		server.BroadcastToRoom("/", roomID, "user_locations", data)
 	})
 
+	server.OnEvent("/", "ride_status", func(s socketio.Conn, data map[string]any) {
+		roomID := data["room"].(string)
+
+		if roomID == "" {
+			s.Emit("error", map[string]string{
+				"error": "room is required",
+			})
+			return
+		}
+
+		payload, err := json.Marshal(data); if err != nil {
+			s.Emit("error", map[string]string{
+				"error": "Could not marshal data",
+			})
+			return
+		}
+
+		uuid := watermill.NewUUID()
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "rides",
+			Operation: "READ_STATUS",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload:   string(payload),
+		}
+
+		err = p.PublishMessage(pubsubMessage)
+		if err != nil {
+			s.Emit("error", map[string]string{
+				"error": "Could not receive data from the database",
+			})
+			return
+		}
+
+		response := (<-utils.Requests.Load(pubsubMessage.UUID)).Payload.(map[string]any)
+		utils.Requests.Delete(pubsubMessage.UUID)
+
+		// Broadcast user locations to all members in the room
+		server.BroadcastToRoom("/", roomID, "ride_status", response)
+	})
 
 	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
 		fmt.Println("disconnected:", s.ID(), "reason:", reason)
