@@ -33,6 +33,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"SET_STATUS": SetStatus,
 				"GET_MY_PROPOSAL_FOR_A_REQUEST": GetMyProposalForARequest,
 				"GET_MATCHES": GetMatches,
+				"GET_ACTIVE_REQUEST": GetActiveRequest,
 			},
 			"rides": {
 				"READ_ALL": GetAllRides,

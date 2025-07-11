@@ -350,3 +350,36 @@ func GetMatches(cr ControllerRequest) echo.HandlerFunc {
 		return cr.SendResponse(&c)
 	}
 }
+
+func GetActiveRequest(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+
+		userId := c.Get("auth_user_id").(float64)
+
+		uuid := watermill.NewUUID()
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
+
+		payload, err := json.Marshal(map[string]any{
+			"user_id": userId,
+		}); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		// publishing a read message
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "requests",
+			Operation: "GET_ACTIVE_REQUEST",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload:   string(payload),
+		}
+		err = cr.Publisher.PublishMessage(pubsubMessage)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		return cr.SendResponse(&c)
+	}
+}

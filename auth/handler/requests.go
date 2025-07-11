@@ -34,3 +34,7 @@ func GetMyProposalForARequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, er
 func GetMatches(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	return pm, nil
 }
+
+func GetActiveRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}

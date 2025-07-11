@@ -296,3 +296,34 @@ func GetMatches(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		"data": results,
 	}, pm, "db->auth")
 }
+
+func GetActiveRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	type Query struct {
+		UserID float64 `json:"user_id"`
+	}
+	var query Query
+	if err := json.Unmarshal([]byte(pm.Payload.(string)), &query); err != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": err.Error(),
+		}, pm, "db->auth")
+	}
+
+	var request types.Request
+	result := db.DB.Model(&types.Request{}).
+		Where("user_id = ? AND status = ?", query.UserID, "searching").
+		Preload("User", func (db *gorm.DB) *gorm.DB {
+			return db.Select("id, name, email, device_token")
+		}).
+		Preload("Vehicle").
+		First(&request)
+	if result.Error != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": result.Error.Error(),
+		}, pm, "db->auth")
+	}
+
+	return utils.CreateRespondingPubsubMessage(map[string]any{
+		"message": "Successfully fetched request",
+		"data":		request,
+	}, pm, "db->auth")
+}

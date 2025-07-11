@@ -222,6 +222,7 @@ func ActiveRide(cr ControllerRequest) echo.HandlerFunc {
 		}
 
 		cr.GetAndFormResponse(pubsubMessage)
-		return cr.SendResponse(&c)
+		cr.APIResponse.StatusCode = 200
+		return cr.SendSuccessResponse(&c)
 	}
 }

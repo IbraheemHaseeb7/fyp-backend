@@ -142,6 +142,9 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.POST("/find-matches", controllers.GetMatches(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
+	router.GET("/active-request", controllers.GetActiveRequest(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 
 	/*
 		* ROOMS
