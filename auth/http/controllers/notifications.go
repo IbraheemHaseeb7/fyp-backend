@@ -45,8 +45,8 @@ func SendNotification(cr ControllerRequest) echo.HandlerFunc {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			cr.APIResponse.Error = err.Error()
-			return cr.SendErrorResponse(&c)
+			cr.APIResponse.Error = nil
+			return cr.SendSuccessResponse(&c)
 		}
 		defer resp.Body.Close()
 

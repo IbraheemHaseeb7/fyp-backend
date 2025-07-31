@@ -16,6 +16,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"VERIFY_OTP": VerifyOTP,
 				"UPDATE_ONE": UpdateUser,
 				"STORE_DEVICE_TOKEN": StoreDeviceToken,
+				"RESET_PASSWORD": ResetPassword,
 			},
 			"vehicles": {
 				"READ_ALL": ReadAllVehicles,
@@ -32,6 +33,7 @@ func Handle(topic string, pubsubMessage pubsub.PubsubMessage) (pubsub.PubsubMess
 				"DELETE":	DeleteRequest,
 				"SET_STATUS": SetStatus,
 				"GET_MY_PROPOSAL_FOR_A_REQUEST": GetMyProposalForARequest,
+				"GET_MATCHED_PROPOSAL_OF_A_REQUEST": GetMatchedProposalOfARequest,
 				"GET_MATCHES": GetMatches,
 				"GET_ACTIVE_REQUEST": GetActiveRequest,
 			},

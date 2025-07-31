@@ -374,3 +374,55 @@ func SendOTP(cr ControllerRequest) echo.HandlerFunc {
 	}
 }
 
+func ResetPassword(cr ControllerRequest) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		id := c.Get("auth_user_id").(string)
+		type Request struct {
+			NewPassword		string `json:"newPassword"`
+			ConfirmPassword	string `json:"confirmPassword"`
+		}
+		var request Request
+		if err := cr.BindAndValidate(&request, &c); err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		if request.NewPassword != request.ConfirmPassword {
+			cr.APIResponse.Error = "Both passwords are not equal"
+			return cr.SendErrorResponse(&c)
+		}
+
+		hashedPwd, err := auth.HashPassword(request.NewPassword)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+		request.NewPassword = hashedPwd
+
+		uuid := watermill.NewUUID()
+		utils.Requests.Store(uuid, make(chan pubsub.PubsubMessage))
+
+		payload, err := json.Marshal(map[string]string{
+			"password": request.NewPassword,
+			"id": id,
+		}); if err != nil {
+			cr.APIResponse.Error = err.Error()
+			return cr.SendErrorResponse(&c)
+		}
+
+		// publishing a read message
+		pubsubMessage := pubsub.PubsubMessage{
+			Entity:    "users",
+			Operation: "RESET_PASSWORD",
+			Topic:     "auth->db",
+			UUID:      uuid,
+			Payload:   string(payload),
+		}
+		err = cr.Publisher.PublishMessage(pubsubMessage)
+		if err != nil {
+			return cr.SendErrorResponse(&c)
+		}
+
+		cr.GetAndFormResponse(pubsubMessage)
+		return cr.SendResponse(&c)
+	}
+}

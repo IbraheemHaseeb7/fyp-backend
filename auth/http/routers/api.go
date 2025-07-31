@@ -34,6 +34,9 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 	router.POST("/refresh", controllers.RefreshToken(controllers.ControllerRequest{
 		Publisher: p,
 	}))
+	router.POST("/reset-password", controllers.RefreshToken(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
 	router.GET("/me", controllers.Me(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
@@ -134,6 +137,9 @@ func ApiRouter(e *echo.Echo, p *pubsub.Publisher) {
 		Publisher: p,
 	}), middlewares.Authenticate())
 	router.POST("/requests/set-status", controllers.SetStatus(controllers.ControllerRequest{
+		Publisher: p,
+	}), middlewares.Authenticate())
+	router.GET("/matched-proposal/:id", controllers.GetMatchedProposalOfARequest(controllers.ControllerRequest{
 		Publisher: p,
 	}), middlewares.Authenticate())
 	router.GET("/my-proposal/:id", controllers.GetMyProposalForARequest(controllers.ControllerRequest{

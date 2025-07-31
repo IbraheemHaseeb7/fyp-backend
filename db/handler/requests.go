@@ -27,15 +27,16 @@ func GetAllRequests(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		Preload("Vehicle").
 		Preload("User").
 		Limit(20).
-		Offset(offset).
-		Where("status = ?", reqBody["status"])
+		Offset(offset)
+		// Where("status = ?", reqBody["status"])
 	var result *gorm.DB
 
 	if reqBody["me"] != "false" {
-		result = query.Where("user_id = ?", reqBody["me"]).Find(&requests)
+		result = query.Where("user_id = ? AND (status = ? or status = ?) AND request_id = 0", reqBody["me"], "matched", "searching").Find(&requests)
+	} else {
+		result = query.Where("status = ?", reqBody["status"]).Find(&requests)
 	}
 
-	result = query.Find(&requests)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
@@ -59,7 +60,7 @@ func GetSingleRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	var request types.Request
 	result := db.DB.Model(&types.Request{}).Preload("Vehicle").
 		Preload("User", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email, registration_number, device_token")
+			return db.Select("id, name, email, registration_number, device_token, profile_uri")
 		}).
 		Where("id = ?", reqBody.ID).First(&request)
 	if result.Error != nil {
@@ -85,19 +86,36 @@ func CreateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	// checking for active requests under this user_id
 	var count int64
 	result := db.DB.Model(&types.Request{}).
-		Where("user_id = ? AND status <> ? AND status <> ? AND status <> ?", reqBody.UserID, "completed", "expired", "rejected").
+		Where("user_id = ? AND status <> ? AND status <> ? AND status <> ? AND status <> ?", reqBody.UserID, "completed", "expired", "rejected", "cancelled").
 		Count(&count)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
 		}, pm, "db->auth")
 	}
-	fmt.Println("Count: ", count, " UserID: ", reqBody.UserID)
 	if count > 0 {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": "You already have a an active request",
-			"status": "Cannot create new ride request",
+			"status": "Cannot create new ride request/proposal",
 		}, pm, "db->auth")
+	}
+
+	// checking if this is proposal, the request should exist
+	if reqBody.RequestID != 0 {
+		result := db.DB.Model(&types.Request{}).
+			Where("id = ? AND status = ?", reqBody.RequestID, "searching").
+			Count(&count)
+		if result.Error != nil {
+			return utils.CreateRespondingPubsubMessage(map[string]any{
+				"error": result.Error.Error(),
+			}, pm, "db->auth")
+		}
+		if count == 0 {
+			return utils.CreateRespondingPubsubMessage(map[string]any{
+				"error": "Parent request does not exist or has expired",
+				"status": "Cannot create new ride request/proposal",
+			}, pm, "db->auth")
+		}
 	}
 
 	// checking if the role is rider, then they must have 1 or more vehicles added
@@ -112,8 +130,30 @@ func CreateRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		}
 		if count == 0  {
 			return utils.CreateRespondingPubsubMessage(map[string]any{
-				"error": "You don't have any vehicles added to generate request",
-				"status": "Cannot create new ride request",
+				"error": "You don't have any vehicles added to generate request/proposal",
+				"status": "Cannot create new ride request/proposal",
+			}, pm, "db->auth")
+		}
+	}
+
+	// checking if the original request vehicle type matches the proposal vehicle type
+	if reqBody.Status == "proposal" && reqBody.OriginatorRole == "rider" {
+
+		var originalRequest types.Request
+		db.DB.Model(&types.Request{}).
+			Where("id = ?", reqBody.RequestID).
+			Preload("Vehicle").
+			Find(&originalRequest)
+
+		var yourVehicle types.Vehicle
+		db.DB.Model(&types.Vehicle{}).
+			Where("id = ?", reqBody.VehicleID).
+			Find(&yourVehicle)
+
+		if originalRequest.VehicleType != yourVehicle.Type {
+			return utils.CreateRespondingPubsubMessage(map[string]any{
+				"error": "Your vehicle types does not match the original vehicle demand",
+				"status": "Cannot create new ride request/proposal",
 			}, pm, "db->auth")
 		}
 	}
@@ -164,7 +204,7 @@ func DeleteRequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		}, pm, "db->auth")
 	}
 
-	result := db.DB.Where("id = ? and user_id = ?", reqBody.ID, reqBody.UserID).Delete(&types.Request{})
+	result := db.DB.Where("(id = ? and user_id = ?) OR (request_id = ?)", reqBody.ID, reqBody.UserID, reqBody.ID).Delete(&types.Request{})
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),
@@ -218,6 +258,41 @@ func SetStatus(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	}, pm, "db->auth")
 }
 
+func  GetMatchedProposalOfARequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	var reqBody map[string]any
+	if err := json.Unmarshal([]byte(pm.Payload.(string)), &reqBody); err != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": err.Error(),
+		}, pm, "db->auth")
+	}
+
+	var data types.Request
+	result := db.DB.Model(&types.Request{}).
+		Where("request_id = ? AND status = ?", reqBody["request_id"], "matched").
+		Preload("User", func (db *gorm.DB) *gorm.DB {
+			return db.Select("id, name, email, registration_number, device_token, profile_uri")
+		}).
+		Preload("Vehicle", func (db *gorm.DB) *gorm.DB {
+			return db.Select("*")
+		}).
+		Find(&data)
+	if result.Error != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": result.Error.Error(),
+		}, pm, "db->auth")
+	}
+
+	if result.RowsAffected == 0 {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": "Not found",
+		}, pm, "db->auth")
+	}
+
+	return utils.CreateRespondingPubsubMessage(map[string]any{
+		"data": data,
+	}, pm, "db->auth")
+}
+
 func  GetMyProposalForARequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	var reqBody map[string]any
 	if err := json.Unmarshal([]byte(pm.Payload.(string)), &reqBody); err != nil {
@@ -228,7 +303,7 @@ func  GetMyProposalForARequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, e
 
 	var data types.Request
 	result := db.DB.Model(&types.Request{}).
-		Where("request_id = ? AND user_id = ?", reqBody["request_id"], reqBody["user_id"]).
+		Where("request_id = ? AND user_id = ? AND status = ?", reqBody["request_id"], reqBody["user_id"], "proposal").
 		Preload("User", func (db *gorm.DB) *gorm.DB {
 			return db.Select("id, name, email, registration_number")
 		}).
@@ -262,7 +337,7 @@ func GetMatches(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	}
 
 	type RequestResult struct {
-		ID             uint
+		ID             uint		`json:"id"`
 		Status         string
 		OriginatorRole string
 		VehicleType    string
@@ -279,18 +354,24 @@ func GetMatches(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	}
 
 	var results []RequestResult
-	db.DB.Raw(`
+	result := db.DB.Raw(`
 		SELECT id, status, originator_role, vehicle_type, from_name, to_name,
 		(6371 * acos(cos(radians(?)) * cos(radians(from_lat)) * cos(radians(from_long) - radians(?)) + sin(radians(?)) * sin(radians(from_lat)))) AS from_distance,
 		(6371 * acos(cos(radians(?)) * cos(radians(to_lat)) * cos(radians(to_long) - radians(?)) + sin(radians(?)) * sin(radians(to_lat)))) AS to_distance
 		FROM requests
-		WHERE id <> ? AND status = ? AND originator_role = ? AND from_distance < 10 AND to_distance < 10 and vehicle_type = ?
-		ORDER BY from_distance + to_distance
+		WHERE id <> ? AND status = ? AND originator_role = ? AND vehicle_type = ?
+		ORDER BY from_distance, to_distance
 		LIMIT 10
 		`, 
 		reqBody["from_lat"], reqBody["from_long"], reqBody["from_lat"], // From lat/lon
 		reqBody["to_lat"], reqBody["to_long"], reqBody["to_lat"], // To lat/lon
 		reqBody["id"], "searching", reqBody["originator_role"], reqBody["vehicle_type"]).Scan(&results)
+
+	if result.Error != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"error": result.Error.Error(),
+		}, pm, "db->auth")
+	}
 
 	return utils.CreateRespondingPubsubMessage(map[string]any{
 		"data": results,

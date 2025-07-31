@@ -107,11 +107,9 @@ func (wp *WorkerPool) processTask(task Task) {
 			wp.mutex.Unlock()
 
 		}
-
 	} else {
 		wp.mutex.Unlock()
 	}
-
 }
 
 // NewTask creates a new task with the given request.

@@ -20,7 +20,7 @@ func GetAllProposals(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	}
 
 	var temp map[string]any
-	result := db.DB.Model(&types.Request{}).Where("id = ? AND user_id = ?", reqBody["request_id"], reqBody["user_id"]).Find(&temp)
+	result := db.DB.Model(&types.Request{}).Where("id = ? AND user_id = ? AND status != ?", reqBody["request_id"], reqBody["user_id"], "rejected").Find(&temp)
 	if result.RowsAffected == 0 {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": "Not authorised to view these proposals",
@@ -29,7 +29,7 @@ func GetAllProposals(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 
 	var data []types.Request
 	result = db.DB.Model(&types.Request{}).
-		Where("request_id = ?", reqBody["request_id"]).
+		Where("request_id = ? AND status <> ?", reqBody["request_id"], "rejected").
 		Preload("User", func (db *gorm.DB) *gorm.DB {
 			return db.Select("id, name, email, registration_number, device_token")
 		}).
@@ -60,12 +60,12 @@ func GetAllMyProposals(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	var data []types.Request
 	result := db.DB.Model(&types.Request{}).
 		Preload("User", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email, registration_number, device_token")
+			return db.Select("id, name, email, registration_number, device_token, profile_uri")
 		}).
 		Preload("Vehicle", func (db *gorm.DB) *gorm.DB {
 			return db.Select("*")
 		}).
-		Where("user_id = ? AND status = ?", reqBody["user_id"],  "proposal").Find(&data)
+		Where("user_id = ? AND (status = ? OR status = ?) AND request_id <> 0", reqBody["user_id"], "proposal", "matched").Find(&data)
 	if result.Error != nil {
 		return utils.CreateRespondingPubsubMessage(map[string]any{
 			"error": result.Error.Error(),

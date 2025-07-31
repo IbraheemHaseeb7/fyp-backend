@@ -27,6 +27,10 @@ func SetStatus(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	return pm, nil
 }
 
+func GetMatchedProposalOfARequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}
+
 func GetMyProposalForARequest(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	return pm, nil
 }

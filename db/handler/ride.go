@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/IbraheemHaseeb7/fyp-backend/db"
 	"github.com/IbraheemHaseeb7/fyp-backend/utils"
@@ -52,10 +53,10 @@ func GetSingleRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	var ride types.Ride
 	result := db.DB.Model(&types.Ride{}).Where("id = ? AND (driver_id = ? OR passenger_id = ?)", query.ID, query.UserID, query.UserID).
 		Preload("Driver", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email, device_token")
+			return db.Select("id, name, email, device_token", "profile_uri")
 		}).
 		Preload("Passenger", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email, device_token")
+			return db.Select("id, name, email, device_token", "profile_uri")
 		}).
 		Preload("Vehicle").
 		Preload("Request").
@@ -161,14 +162,16 @@ func ActiveRide(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		}, pm, "db->auth")
 	}
 
+	fmt.Println("asdjadsadasd")
+
 	var ride types.Ride
 	result := db.DB.Model(&types.Ride{}).
-		Where("request_id = (select id from requests where user_id = ? and status = ?) OR proposal_id = (select id from requests where user_id = ? and status = ?)", query.UserID, "matched", query.UserID, "matched").
+		Where("(status = 'started' OR status = 'reaching_passenger' OR status = 'reached_passenger' OR status = 'reached_destination') AND (request_id = (select id from requests where user_id = ? and (status = ? or status = ?)) OR proposal_id = (select id from requests where user_id = ? and (status = ? or status = ?)))", query.UserID, "matched", "ride_started", query.UserID, "matched", "ride_started").
 		Preload("Driver", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email, device_token")
+			return db.Select("id, name, email, device_token", "profile_uri")
 		}).
 		Preload("Passenger", func (db *gorm.DB) *gorm.DB {
-			return db.Select("id, name, email, device_token")
+			return db.Select("id, name, email, device_token", "profile_uri")
 		}).
 		Preload("Vehicle").
 		Preload("Request").

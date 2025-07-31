@@ -12,7 +12,7 @@ import (
 func SendEmail(cr ControllerRequest) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		type Request struct {
-			Email string `json:"email" validate:"required,email"`
+			Email string `json:"email" validate:"required,cui-email"`
 			Subject string `json:"subject" validate:"required"`
 			Body   string `json:"body" validate:"required"`
 		}

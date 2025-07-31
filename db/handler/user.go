@@ -397,3 +397,35 @@ func StoreDeviceToken(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 		"status": "Successfully updated device token",
 	}, pm, "db->auth")
 }
+
+func ResetPassword(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+
+	type Request struct {
+		Password string 	`json:"password"`
+		Id  		float64 `json:"id"`
+	}
+	var requestBody Request
+	err := json.Unmarshal([]byte(pm.Payload.(string)), &requestBody)
+	if err != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"data":   nil,
+			"error":  err.Error(),
+			"status": "Could not parse JSON",
+		}, pm, "db->auth")
+	}
+
+	result := db.DB.Model(&types.User{}).Where("id = ?", requestBody.Id).Update("password", requestBody.Password)
+	if result.Error != nil {
+		return utils.CreateRespondingPubsubMessage(map[string]any{
+			"data":   nil,
+			"error":  result.Error.Error(),
+			"status": "Could not update password",
+		}, pm, "db->auth")
+	}
+
+	return utils.CreateRespondingPubsubMessage(map[string]any{
+		"data":   nil,
+		"error":  nil,
+		"status": "Successfully updated password",
+	}, pm, "db->auth")
+}

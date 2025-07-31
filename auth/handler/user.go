@@ -35,3 +35,7 @@ func UpdateUser(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 func StoreDeviceToken(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
 	return pm, nil
 }
+
+func ResetPassword(pm pubsub.PubsubMessage) (pubsub.PubsubMessage, error) {
+	return pm, nil
+}
